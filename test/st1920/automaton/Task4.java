@@ -10,5 +10,10 @@ public class Task4 {
 	public void test1() {
 		assertTrue(RegExpMatcher.matches("\n", "$"));
 	}
+	
+	@Test
+	public void test2() {
+		assertTrue(RegExpMatcher.matches("\r", "$"));
+	}
 
 }
