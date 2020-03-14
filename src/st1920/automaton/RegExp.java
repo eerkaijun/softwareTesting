@@ -119,7 +119,8 @@ public class RegExp {
 		REGEXP_STRING,
 		REGEXP_ANYSTRING,
 		REGEXP_AUTOMATON,
-		REGEXP_INTERVAL
+		REGEXP_INTERVAL,
+		REGEXP_NEW_LINE
 	}
 	
 	/** 
@@ -333,6 +334,9 @@ public class RegExp {
 		case REGEXP_INTERVAL:
 			a = BasicAutomata.makeInterval(min, max, digits);
 			break;
+		case REGEXP_NEW_LINE:
+			a = BasicAutomata.makeNewLine();
+			break;
 		}
 		return a;
 	}
@@ -474,6 +478,12 @@ public class RegExp {
 	private static RegExp makeAnyString() {
 		RegExp r = new RegExp();
 		r.kind = Kind.REGEXP_ANYSTRING;
+		return r;
+	}
+	
+	private static RegExp makeNewLine() {
+		RegExp r = new RegExp();
+		r.kind = Kind.REGEXP_NEW_LINE;
 		return r;
 	}
 
@@ -625,6 +635,8 @@ public class RegExp {
 			return makeEmpty();
 		else if (check(ANYSTRING) && match('@'))
 			return makeAnyString();
+		else if (match('$'))
+			return makeNewLine();
 		else if (match('"')) {
 			int start = pos;
 			while (more() && !peek("\""))

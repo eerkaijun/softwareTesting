@@ -239,5 +239,15 @@ final public class BasicAutomata {
 		a.deterministic = true;
 		return a;
 	}
+	
+	/** 
+	 * Returns a new (deterministic) automaton that accepts a new line. 
+	 */
+	public static Automaton makeNewLine() {
+		Automaton a = new Automaton();
+		a.singleton = "\n";
+		a.deterministic = true;
+		return a;
+	}
 
 }
