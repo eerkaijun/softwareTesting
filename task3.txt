@@ -1,0 +1,7 @@
+Advantages and Disadvantages of Using Randoop
+
+Advantages:
+- random generation of arbituary values which triggers many exception statements
+
+Disadvantages:
+- does not reach deep into the code
