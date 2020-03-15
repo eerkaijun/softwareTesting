@@ -341,7 +341,7 @@ public class Task3_all {
 	
 	@Test
 	public void test54() {															//bug 11
-		assertFalse(RegExpMatcher.matches("$�", "[!-*]?"));
+		assertFalse(RegExpMatcher.matches("$ï¿½", "[!-*]?"));
 	}
 	
 	@Test
@@ -418,7 +418,7 @@ public class Task3_all {
 	
 	@Test
 	public void test66() {															//bug 8
-		assertFalse(RegExpMatcher.matches("a←↑⍅↑↓↱↯⇂⇢⇥⇝!", "a←↑⍅↑↓([a-z0-9])*"));
+		assertFalse(RegExpMatcher.matches("aâ†�â†‘â�…â†‘â†“â†±â†¯â‡‚â‡¢â‡¥â‡�!", "aâ†�â†‘â�…â†‘â†“([a-z0-9])*"));
 	}
 
 
@@ -18343,7 +18343,20 @@ public class Task3_all {
 	public void test0006() {
 		assertFalse(RegExpMatcher.matches("hello", "([a-])*"));
 	}
-    
+	@Test 
+	public void test0007() {
+		assertTrue(RegExpMatcher.matches("a", "@?&a"));
+	}
+
+	@Test 
+	public void test0008() {
+		assertFalse(RegExpMatcher.matches("hello", "(hello)((?)\\|\\(+))"));
+	}
+	@Test 
+	public void test0009() {
+		assertFalse(RegExpMatcher.matches("hello", "(hello)((?)\\(~(&))\\(+))"));
+	}
+	
 }
 
 

@@ -35,5 +35,17 @@ public class Task3_2 {
 	public void test0006() {
 		assertFalse(RegExpMatcher.matches("hello", "([a-])*"));
 	}
+	@Test 
+	public void test0007() {
+		assertTrue(RegExpMatcher.matches("a", "@?&a"));
+	}
 
+	@Test 
+	public void test0008() {
+		assertFalse(RegExpMatcher.matches("hello", "(hello)((?)\\|\\(+))"));
+	}
+	@Test 
+	public void test0009() {
+		assertFalse(RegExpMatcher.matches("hello", "(hello)((?)\\(~(&))\\(+))"));
+	}
 }
