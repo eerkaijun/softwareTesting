@@ -245,7 +245,11 @@ final public class BasicAutomata {
 	 */
 	public static Automaton makeNewLine() {
 		Automaton a = new Automaton();
-		a.singleton = "\n";
+		//a.singleton = "\n";
+		State s = new State();
+		a.initial = s;
+		s.accept = true;
+		s.transitions.add(new Transition('\n', '\r', s));
 		a.deterministic = true;
 		return a;
 	}
