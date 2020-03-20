@@ -75,9 +75,21 @@ public class Task4 {
 	public void test16() {
 		assertTrue(RegExpMatcher.matches("\r", "."));
 	}
-	//this should be true
+	//this should be true?
 	@Test
 	public void test17() {
 		assertTrue(RegExpMatcher.matches("\r\n", "."));
+	}
+	@Test
+	public void test18() {
+		assertTrue(RegExpMatcher.matches("hello\nhi\r\n", "(([a-z])*$)+"));
+	}
+	@Test
+	public void test19() {
+		assertTrue(RegExpMatcher.matches("\n\r\r\n", "${3}"));
+	}
+	@Test
+	public void test20() {
+		assertTrue(RegExpMatcher.matches("\n\r\r\n", "${4}"));
 	}
 }
