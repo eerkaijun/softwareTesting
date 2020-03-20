@@ -34,5 +34,9 @@ public class Task4 {
 	public void test6() {
 		assertFalse(RegExpMatcher.matches("\n\n\n\n\n", "$"));
 	}
+	@Test
+	public void test7() {
+		assertTrue(RegExpMatcher.matches("a\naaa\r\n", "(a+$)+"));
+	}
 
 }
