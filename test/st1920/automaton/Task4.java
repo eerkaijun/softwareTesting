@@ -128,4 +128,8 @@ public class Task4 {
 	public void test27() {
 		assertFalse(RegExpMatcher.matches("\n\r", "$"));
 	}
+	@Test
+	public void test28() {
+		assertTrue(RegExpMatcher.matches("$", "\\$"));
+	}
 }
