@@ -92,4 +92,16 @@ public class Task4 {
 	public void test20() {
 		assertTrue(RegExpMatcher.matches("\n\r\r\n", "${4}"));
 	}
+	@Test
+	public void test21() {
+		assertTrue(RegExpMatcher.matches("\n\r\r\n", "${4}"));
+	}
+	@Test
+	public void test22() {
+		assertTrue(RegExpMatcher.matches("\n\r\r\n", "${4}"));
+	}
+	@Test
+	public void test23() {
+		assertTrue(RegExpMatcher.matches("$", "$"));
+	}
 }
