@@ -14,6 +14,7 @@ public class Task4 {
 	@Test
 	public void test2() {
 		assertTrue(RegExpMatcher.matches("\r", "$"));
+
 	}
 	
 	@Test

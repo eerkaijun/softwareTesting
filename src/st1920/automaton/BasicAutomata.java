@@ -243,15 +243,24 @@ final public class BasicAutomata {
 	/** 
 	 * Returns a new (deterministic) automaton that accepts a new line. 
 	 */
-	public static Automaton makeNewLine() {
+	public static Automaton makeNewLineUnix() {
 		Automaton a = new Automaton();
-		//a.singleton = "\n";
-		State s = new State();
-		a.initial = s;
-		s.accept = true;
-		s.transitions.add(new Transition('\n', '\r', s));
-		a.deterministic = true;
+		 a.singleton = "\n";
+		 a.deterministic = true;
 		return a;
+		
 	}
-
+	public static Automaton makeNewLineMac() {
+ 		Automaton a = new Automaton();
+		 a.singleton = "\r";
+		 a.deterministic = true;
+		return a;
+		
+	}	public static Automaton makeNewLineWindows() {
+ 		Automaton a = new Automaton();
+		 a.singleton = "\r\n";
+		 a.deterministic = true;
+		return a;
+		
+	}
 }

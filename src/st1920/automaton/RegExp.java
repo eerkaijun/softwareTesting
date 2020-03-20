@@ -31,6 +31,7 @@ package st1920.automaton;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -335,7 +336,14 @@ public class RegExp {
 			a = BasicAutomata.makeInterval(min, max, digits);
 			break;
 		case REGEXP_NEW_LINE:
-			a = BasicAutomata.makeNewLine();
+			Automaton x = BasicAutomata.makeNewLineMac();
+			Automaton y = BasicAutomata.makeNewLineWindows();
+			Automaton z = BasicAutomata.makeNewLineUnix();
+			Collection<Automaton> l = new ArrayList<Automaton>();
+			l.add(x);
+			l.add(y);
+			l.add(z);
+			a = BasicOperations.union(l);
 			break;
 		}
 		return a;
