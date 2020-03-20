@@ -38,5 +38,13 @@ public class Task4 {
 	public void test7() {
 		assertTrue(RegExpMatcher.matches("a\naaa\r\n", "(a+$)+"));
 	}
-
+	
+	@Test
+	public void test8() {
+		assertFalse(RegExpMatcher.matches(" ", "$"));
+	}
+	@Test
+	public void test9() {
+		assertTrue(RegExpMatcher.matches("hello", "([a-z])+&(~$)"));
+	}
 }
