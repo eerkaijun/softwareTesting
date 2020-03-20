@@ -67,4 +67,17 @@ public class Task4 {
 	public void test14() {
 		assertFalse(RegExpMatcher.matches("", "$+"));
 	}
+	@Test
+	public void test15() {
+		assertTrue(RegExpMatcher.matches("\n", "."));
+	}
+	@Test
+	public void test16() {
+		assertTrue(RegExpMatcher.matches("\r", "."));
+	}
+	//this should be true
+	@Test
+	public void test17() {
+		assertTrue(RegExpMatcher.matches("\r\n", "."));
+	}
 }
