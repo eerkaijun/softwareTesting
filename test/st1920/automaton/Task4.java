@@ -47,4 +47,24 @@ public class Task4 {
 	public void test9() {
 		assertTrue(RegExpMatcher.matches("hello", "([a-z])+&(~$)"));
 	}
+	@Test
+	public void test10() {
+		assertFalse(RegExpMatcher.matches("\n\n", "$?"));
+	}
+	@Test
+	public void test11() {
+		assertTrue(RegExpMatcher.matches("\n\n", "$+"));
+	}
+	@Test
+	public void test12() {
+		assertTrue(RegExpMatcher.matches("\n\r\r\n", "$*"));
+	}
+	@Test
+	public void test13() {
+		assertTrue(RegExpMatcher.matches("\r\n", "$?"));
+	}
+	@Test
+	public void test14() {
+		assertFalse(RegExpMatcher.matches("", "$+"));
+	}
 }
