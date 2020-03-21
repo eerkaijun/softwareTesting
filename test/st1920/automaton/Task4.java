@@ -105,7 +105,7 @@ public class Task4 {
 	}
 	@Test
 	public void test23() {
-		assertTrue(RegExpMatcher.matches("$", "$"));
+		assertFalse(RegExpMatcher.matches("$", "$"));
 	}
 	
 	@Test
