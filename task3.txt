@@ -1,7 +1,13 @@
 Advantages and Disadvantages of Using Randoop
 
 Advantages:
-- random generation of arbituary values which triggers many exception statements
+- random generation of arbituary values which might not be thought by humans
+- fast testing as many test cases can be generated in short amount of time
+- random sampling of the input space
 
 Disadvantages:
 - does not reach deep into the code
+- does not cover semi valid inputs at boundary of valid space
+- randoop test cases are designed to pass, therefore there might be undetected bugs
+- possible high maintenance to randoop test cases due to large numbers of it
+
