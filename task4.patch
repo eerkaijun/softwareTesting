@@ -1,0 +1,1914 @@
+diff --git a/src/st1920/automaton/BasicAutomata.java b/src/st1920/automaton/BasicAutomata.java
+index 094d18e..489ef98 100644
+--- a/src/st1920/automaton/BasicAutomata.java
++++ b/src/st1920/automaton/BasicAutomata.java
+@@ -1,243 +1,267 @@
+-/*
+- * Original license:
+- * 
+- * Copyright (c) 2001-2017 Anders Moeller
+- * All rights reserved.
+- * 
+- * Redistribution and use in source and binary forms, with or without
+- * modification, are permitted provided that the following conditions
+- * are met:
+- * 1. Redistributions of source code must retain the above copyright
+- *    notice, this list of conditions and the following disclaimer.
+- * 2. Redistributions in binary form must reproduce the above copyright
+- *    notice, this list of conditions and the following disclaimer in the
+- *    documentation and/or other materials provided with the distribution.
+- * 3. The name of the author may not be used to endorse or promote products
+- *    derived from this software without specific prior written permission.
+- * 
+- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+- */
+-
+-package st1920.automaton;
+-
+-import java.util.ArrayList;
+-import java.util.Collection;
+-
+-/**
+- * Construction of basic automata.
+- */
+-final public class BasicAutomata {
+-	
+-	private BasicAutomata() {}
+-
+-	/** 
+-	 * Returns a new (deterministic) automaton with the empty language. 
+-	 */
+-	public static Automaton makeEmpty() {
+-		Automaton a = new Automaton();
+-		a.initial = new State();
+-		a.deterministic = true;
+-		return a;
+-	}
+-	
+-	/** 
+-	 * Returns a new (deterministic) automaton that accepts only the empty string. 
+-	 */
+-	public static Automaton makeEmptyString() {
+-		Automaton a = new Automaton();
+-		a.singleton = "";
+-		a.deterministic = true;
+-		return a;
+-	}
+-	
+-	/** 
+-	 * Returns a new (deterministic) automaton that accepts all strings. 
+-	 */
+-	public static Automaton makeAnyString()	{
+-		Automaton a = new Automaton();
+-		State s = new State();
+-		a.initial = s;
+-		s.accept = true;
+-		s.transitions.add(new Transition(Character.MIN_VALUE, Character.MAX_VALUE, s));
+-		a.deterministic = true;
+-		return a;
+-	}
+-	
+-	/** 
+-	 * Returns a new (deterministic) automaton that accepts any single character. 
+-	 */
+-	public static Automaton makeAnyChar() {
+-		return makeCharRange(Character.MIN_VALUE, Character.MAX_VALUE);
+-	}
+-	
+-	/** 
+-	 * Returns a new (deterministic) automaton that accepts a single character of the given value. 
+-	 */
+-	public static Automaton makeChar(char c) {
+-		Automaton a = new Automaton();
+-		a.singleton = Character.toString(c);
+-		a.deterministic = true;
+-		return a;
+-	}
+-	
+-	/** 
+-	 * Returns a new (deterministic) automaton that accepts a single char 
+-	 * whose value is in the given interval (including both end points). 
+-	 */
+-	public static Automaton makeCharRange(char min, char max) {
+-		if (min == max)
+-			return makeChar(min);
+-		Automaton a = new Automaton();
+-		State s1 = new State();
+-		State s2 = new State();
+-		a.initial = s1;
+-		s2.accept = true;
+-		if (min <= max)
+-			s1.transitions.add(new Transition(min, max, s2));
+-		a.deterministic = true;
+-		return a;
+-	}
+-	
+-	/**
+-	 * Constructs sub-automaton corresponding to decimal numbers of 
+-	 * length x.substring(n).length().
+-	 */
+-	private static State anyOfRightLength(String x, int n) {
+-		State s = new State();
+-		if (x.length() == n)
+-			s.setAccept(true);
+-		else
+-			s.addTransition(new Transition('0', '9', anyOfRightLength(x, n + 1)));
+-		return s;
+-	}
+-	
+-	/**
+-	 * Constructs sub-automaton corresponding to decimal numbers of value 
+-	 * at least x.substring(n) and length x.substring(n).length().
+-	 */
+-	private static State atLeast(String x, int n, Collection<State> initials, boolean zeros) {
+-		State s = new State();
+-		if (x.length() == n)
+-			s.setAccept(true);
+-		else {
+-			if (zeros)
+-				initials.add(s);
+-			char c = x.charAt(n);
+-			s.addTransition(new Transition(c, atLeast(x, n + 1, initials, zeros && c == '0')));
+-			if (c < '9')
+-				s.addTransition(new Transition((char)(c + 1), '9', anyOfRightLength(x, n + 1)));
+-		}
+-		return s;
+-	}
+-	
+-	/**
+-	 * Constructs sub-automaton corresponding to decimal numbers of value 
+-	 * at most x.substring(n) and length x.substring(n).length().
+-	 */
+-	private static State atMost(String x, int n) {
+-		State s = new State();
+-		if (x.length() == n)
+-			s.setAccept(true);
+-		else {
+-			char c = x.charAt(n);
+-			s.addTransition(new Transition(c, atMost(x, (char)n + 1)));
+-			if (c > '0')
+-				s.addTransition(new Transition('0', (char)(c - 1), anyOfRightLength(x, n + 1)));
+-		}
+-		return s;
+-	}
+-	
+-	/**
+-	 * Constructs sub-automaton corresponding to decimal numbers of value 
+-	 * between x.substring(n) and y.substring(n) and of
+-	 * length x.substring(n).length() (which must be equal to y.substring(n).length()).
+-	 */
+-	private static State between(String x, String y, int n, Collection<State> initials, boolean zeros) {
+-		State s = new State();
+-		if (x.length() == n)
+-			s.setAccept(true);
+-		else {
+-			if (zeros)
+-				initials.add(s);
+-			char cx = x.charAt(n);
+-			char cy = y.charAt(n);
+-			if (cx == cy)
+-				s.addTransition(new Transition(cx, between(x, y, n + 1, initials, zeros && cx == '0')));
+-			else { // cx<cy
+-				s.addTransition(new Transition(cx, atLeast(x, n + 1, initials, zeros && cx == '0')));
+-				s.addTransition(new Transition(cy, atMost(y, n + 1)));
+-				if (cx + 1 < cy)
+-					s.addTransition(new Transition((char)(cx + 1), (char)(cy - 1), anyOfRightLength(x, n + 1)));
+-			}
+-		}
+-		return s;
+-	}
+-	
+-	/** 
+-	 * Returns a new automaton that accepts strings representing 
+-	 * decimal non-negative integers in the given interval.
+-	 * @param min minimal value of interval
+-	 * @param max maximal value of inverval (both end points are included in the interval)
+-	 * @param digits if &gt;0, use fixed number of digits (strings must be prefixed
+-	 *               by 0's to obtain the right length) -
+-	 *               otherwise, the number of digits is not fixed
+-	 * @exception IllegalArgumentException if min&gt;max or if numbers in the interval cannot be expressed
+-	 *                                     with the given fixed number of digits
+-	 */
+-	public static Automaton makeInterval(int min, int max, int digits) throws IllegalArgumentException {
+-		Automaton a = new Automaton();
+-		String x = Integer.toString(min);
+-		String y = Integer.toString(max);
+-		if (min > max || (digits > 0 && y.length() > digits))
+-			throw new IllegalArgumentException();
+-		int d;
+-		if (digits > 0)
+-			d = digits;
+-		else
+-			d = y.length();
+-		StringBuilder bx = new StringBuilder();
+-		for (int i = x.length(); i < d; i++)
+-			bx.append('0');
+-		bx.append(x);
+-		x = bx.toString();
+-		StringBuilder by = new StringBuilder();
+-		for (int i = y.length(); i < d; i++)
+-			by.append('0');
+-		by.append(y);
+-		y = by.toString();
+-		Collection<State> initials = new ArrayList<State>();
+-		a.initial = between(x, y, 0, initials, digits <= 0);
+-		if (digits <= 0) {
+-			ArrayList<StatePair> pairs = new ArrayList<StatePair>();
+-			for (State p : initials)
+-				if (a.initial != p)
+-					pairs.add(new StatePair(a.initial, p));
+-			a.addEpsilons(pairs);
+-			a.initial.addTransition(new Transition('0', a.initial));
+-			a.deterministic = false;
+-		} else
+-			a.deterministic = true;
+-		a.checkMinimizeAlways();
+-		return a;
+-	}
+-	
+-	/** 
+-	 * Returns a new (deterministic) automaton that accepts the single given string.
+-	 */
+-	public static Automaton makeString(String s) {
+-		Automaton a = new Automaton();
+-		a.singleton = s;
+-		a.deterministic = true;
+-		return a;
+-	}
+-
+-}
++/*
++ * Original license:
++ * 
++ * Copyright (c) 2001-2017 Anders Moeller
++ * All rights reserved.
++ * 
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ * 3. The name of the author may not be used to endorse or promote products
++ *    derived from this software without specific prior written permission.
++ * 
++ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
++ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
++ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
++ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
++ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
++ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
++ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
++ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++package st1920.automaton;
++
++import java.util.ArrayList;
++import java.util.Collection;
++
++/**
++ * Construction of basic automata.
++ */
++final public class BasicAutomata {
++	
++	private BasicAutomata() {}
++
++	/** 
++	 * Returns a new (deterministic) automaton with the empty language. 
++	 */
++	public static Automaton makeEmpty() {
++		Automaton a = new Automaton();
++		a.initial = new State();
++		a.deterministic = true;
++		return a;
++	}
++	
++	/** 
++	 * Returns a new (deterministic) automaton that accepts only the empty string. 
++	 */
++	public static Automaton makeEmptyString() {
++		Automaton a = new Automaton();
++		a.singleton = "";
++		a.deterministic = true;
++		return a;
++	}
++	
++	/** 
++	 * Returns a new (deterministic) automaton that accepts all strings. 
++	 */
++	public static Automaton makeAnyString()	{
++		Automaton a = new Automaton();
++		State s = new State();
++		a.initial = s;
++		s.accept = true;
++		s.transitions.add(new Transition(Character.MIN_VALUE, Character.MAX_VALUE, s));
++		a.deterministic = true;
++		return a;
++	}
++	
++	/** 
++	 * Returns a new (deterministic) automaton that accepts any single character. 
++	 */
++	public static Automaton makeAnyChar() {
++		return makeCharRange(Character.MIN_VALUE, Character.MAX_VALUE);
++	}
++	
++	/** 
++	 * Returns a new (deterministic) automaton that accepts a single character of the given value. 
++	 */
++	public static Automaton makeChar(char c) {
++		Automaton a = new Automaton();
++		a.singleton = Character.toString(c);
++		a.deterministic = true;
++		return a;
++	}
++	
++	/** 
++	 * Returns a new (deterministic) automaton that accepts a single char 
++	 * whose value is in the given interval (including both end points). 
++	 */
++	public static Automaton makeCharRange(char min, char max) {
++		if (min == max)
++			return makeChar(min);
++		Automaton a = new Automaton();
++		State s1 = new State();
++		State s2 = new State();
++		a.initial = s1;
++		s2.accept = true;
++		if (min <= max)
++			s1.transitions.add(new Transition(min, max, s2));
++		a.deterministic = true;
++		return a;
++	}
++	
++	/**
++	 * Constructs sub-automaton corresponding to decimal numbers of 
++	 * length x.substring(n).length().
++	 */
++	private static State anyOfRightLength(String x, int n) {
++		State s = new State();
++		if (x.length() == n)
++			s.setAccept(true);
++		else
++			s.addTransition(new Transition('0', '9', anyOfRightLength(x, n + 1)));
++		return s;
++	}
++	
++	/**
++	 * Constructs sub-automaton corresponding to decimal numbers of value 
++	 * at least x.substring(n) and length x.substring(n).length().
++	 */
++	private static State atLeast(String x, int n, Collection<State> initials, boolean zeros) {
++		State s = new State();
++		if (x.length() == n)
++			s.setAccept(true);
++		else {
++			if (zeros)
++				initials.add(s);
++			char c = x.charAt(n);
++			s.addTransition(new Transition(c, atLeast(x, n + 1, initials, zeros && c == '0')));
++			if (c < '9')
++				s.addTransition(new Transition((char)(c + 1), '9', anyOfRightLength(x, n + 1)));
++		}
++		return s;
++	}
++	
++	/**
++	 * Constructs sub-automaton corresponding to decimal numbers of value 
++	 * at most x.substring(n) and length x.substring(n).length().
++	 */
++	private static State atMost(String x, int n) {
++		State s = new State();
++		if (x.length() == n)
++			s.setAccept(true);
++		else {
++			char c = x.charAt(n);
++			s.addTransition(new Transition(c, atMost(x, (char)n + 1)));
++			if (c > '0')
++				s.addTransition(new Transition('0', (char)(c - 1), anyOfRightLength(x, n + 1)));
++		}
++		return s;
++	}
++	
++	/**
++	 * Constructs sub-automaton corresponding to decimal numbers of value 
++	 * between x.substring(n) and y.substring(n) and of
++	 * length x.substring(n).length() (which must be equal to y.substring(n).length()).
++	 */
++	private static State between(String x, String y, int n, Collection<State> initials, boolean zeros) {
++		State s = new State();
++		if (x.length() == n)
++			s.setAccept(true);
++		else {
++			if (zeros)
++				initials.add(s);
++			char cx = x.charAt(n);
++			char cy = y.charAt(n);
++			if (cx == cy)
++				s.addTransition(new Transition(cx, between(x, y, n + 1, initials, zeros && cx == '0')));
++			else { // cx<cy
++				s.addTransition(new Transition(cx, atLeast(x, n + 1, initials, zeros && cx == '0')));
++				s.addTransition(new Transition(cy, atMost(y, n + 1)));
++				if (cx + 1 < cy)
++					s.addTransition(new Transition((char)(cx + 1), (char)(cy - 1), anyOfRightLength(x, n + 1)));
++			}
++		}
++		return s;
++	}
++	
++	/** 
++	 * Returns a new automaton that accepts strings representing 
++	 * decimal non-negative integers in the given interval.
++	 * @param min minimal value of interval
++	 * @param max maximal value of inverval (both end points are included in the interval)
++	 * @param digits if &gt;0, use fixed number of digits (strings must be prefixed
++	 *               by 0's to obtain the right length) -
++	 *               otherwise, the number of digits is not fixed
++	 * @exception IllegalArgumentException if min&gt;max or if numbers in the interval cannot be expressed
++	 *                                     with the given fixed number of digits
++	 */
++	public static Automaton makeInterval(int min, int max, int digits) throws IllegalArgumentException {
++		Automaton a = new Automaton();
++		String x = Integer.toString(min);
++		String y = Integer.toString(max);
++		if (min > max || (digits > 0 && y.length() > digits))
++			throw new IllegalArgumentException();
++		int d;
++		if (digits > 0)
++			d = digits;
++		else
++			d = y.length();
++		StringBuilder bx = new StringBuilder();
++		for (int i = x.length(); i < d; i++)
++			bx.append('0');
++		bx.append(x);
++		x = bx.toString();
++		StringBuilder by = new StringBuilder();
++		for (int i = y.length(); i < d; i++)
++			by.append('0');
++		by.append(y);
++		y = by.toString();
++		Collection<State> initials = new ArrayList<State>();
++		a.initial = between(x, y, 0, initials, digits <= 0);
++		if (digits <= 0) {
++			ArrayList<StatePair> pairs = new ArrayList<StatePair>();
++			for (State p : initials)
++				if (a.initial != p)
++					pairs.add(new StatePair(a.initial, p));
++			a.addEpsilons(pairs);
++			a.initial.addTransition(new Transition('0', a.initial));
++			a.deterministic = false;
++		} else
++			a.deterministic = true;
++		a.checkMinimizeAlways();
++		return a;
++	}
++	
++	/** 
++	 * Returns a new (deterministic) automaton that accepts the single given string.
++	 */
++	public static Automaton makeString(String s) {
++		Automaton a = new Automaton();
++		a.singleton = s;
++		a.deterministic = true;
++		return a;
++	}
++	
++	/** 
++	 * Returns a new (deterministic) automaton that accepts a new line. 
++	 */
++	public static Automaton makeNewLineUnix() {
++		Automaton a = new Automaton();
++		a.singleton = "\n";
++		a.deterministic = true;
++		return a;	
++	}
++	
++	public static Automaton makeNewLineMac() {
++ 		Automaton a = new Automaton();
++		a.singleton = "\r";
++		a.deterministic = true;
++		return a;
++	}	
++	
++	public static Automaton makeNewLineWindows() {
++ 		Automaton a = new Automaton();
++		a.singleton = "\r\n";
++		a.deterministic = true;
++		return a;
++	}
++	
++}
+diff --git a/src/st1920/automaton/RegExp.java b/src/st1920/automaton/RegExp.java
+index 1290c85..60a5967 100644
+--- a/src/st1920/automaton/RegExp.java
++++ b/src/st1920/automaton/RegExp.java
+@@ -1,687 +1,707 @@
+-/*
+- * Original license:
+- * 
+- * Copyright (c) 2001-2017 Anders Moeller
+- * All rights reserved.
+- * 
+- * Redistribution and use in source and binary forms, with or without
+- * modification, are permitted provided that the following conditions
+- * are met:
+- * 1. Redistributions of source code must retain the above copyright
+- *    notice, this list of conditions and the following disclaimer.
+- * 2. Redistributions in binary form must reproduce the above copyright
+- *    notice, this list of conditions and the following disclaimer in the
+- *    documentation and/or other materials provided with the distribution.
+- * 3. The name of the author may not be used to endorse or promote products
+- *    derived from this software without specific prior written permission.
+- * 
+- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+- * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+- * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+- */
+-
+-package st1920.automaton;
+-
+-import java.io.IOException;
+-import java.util.ArrayList;
+-import java.util.List;
+-import java.util.Map;
+-
+-/**
+- * Regular Expression extension to <code>Automaton</code>.
+- * <p>
+- * Regular expressions are built from the following abstract syntax:
+- * <table border=0>
+- * <tr><td><i>regexp</i></td><td>::=</td><td><i>unionexp</i></td><td></td><td></td></tr>
+- * <tr><td></td><td>|</td><td></td><td></td><td></td></tr>
+- *
+- * <tr><td><i>unionexp</i></td><td>::=</td><td><i>interexp</i>&nbsp;<tt><b>|</b></tt>&nbsp;<i>unionexp</i></td><td>(union)</td><td></td></tr>
+- * <tr><td></td><td>|</td><td><i>interexp</i></td><td></td><td></td></tr>
+- *
+- * <tr><td><i>interexp</i></td><td>::=</td><td><i>concatexp</i>&nbsp;<tt><b>&amp;</b></tt>&nbsp;<i>interexp</i></td><td>(intersection)</td><td><small>[OPTIONAL]</small></td></tr>
+- * <tr><td></td><td>|</td><td><i>concatexp</i></td><td></td><td></td></tr>
+- *
+- * <tr><td><i>concatexp</i></td><td>::=</td><td><i>repeatexp</i>&nbsp;<i>concatexp</i></td><td>(concatenation)</td><td></td></tr>
+- * <tr><td></td><td>|</td><td><i>repeatexp</i></td><td></td><td></td></tr>
+- *
+- * <tr><td><i>repeatexp</i></td><td>::=</td><td><i>repeatexp</i>&nbsp;<tt><b>?</b></tt></td><td>(zero or one occurrence)</td><td></td></tr>
+- * <tr><td></td><td>|</td><td><i>repeatexp</i>&nbsp;<tt><b>*</b></tt></td><td>(zero or more occurrences)</td><td></td></tr>
+- * <tr><td></td><td>|</td><td><i>repeatexp</i>&nbsp;<tt><b>+</b></tt></td><td>(one or more occurrences)</td><td></td></tr>
+- * <tr><td></td><td>|</td><td><i>repeatexp</i>&nbsp;<tt><b>{</b><i>n</i><b>}</b></tt></td><td>(<tt><i>n</i></tt> occurrences)</td><td></td></tr>
+- * <tr><td></td><td>|</td><td><i>repeatexp</i>&nbsp;<tt><b>{</b><i>n</i><b>,}</b></tt></td><td>(<tt><i>n</i></tt> or more occurrences)</td><td></td></tr>
+- * <tr><td></td><td>|</td><td><i>repeatexp</i>&nbsp;<tt><b>{</b><i>n</i><b>,</b><i>m</i><b>}</b></tt></td><td>(<tt><i>n</i></tt> to <tt><i>m</i></tt> occurrences, including both)</td><td></td></tr>
+- * <tr><td></td><td>|</td><td><i>complexp</i></td><td></td><td></td></tr>
+- *
+- * <tr><td><i>complexp</i></td><td>::=</td><td><tt><b>~</b></tt>&nbsp;<i>complexp</i></td><td>(complement)</td><td><small>[OPTIONAL]</small></td></tr>
+- * <tr><td></td><td>|</td><td><i>charclassexp</i></td><td></td><td></td></tr>
+- *
+- * <tr><td><i>charclassexp</i></td><td>::=</td><td><tt><b>[</b></tt>&nbsp;<i>charclasses</i>&nbsp;<tt><b>]</b></tt></td><td>(character class)</td><td></td></tr>
+- * <tr><td></td><td>|</td><td><tt><b>[^</b></tt>&nbsp;<i>charclasses</i>&nbsp;<tt><b>]</b></tt></td><td>(negated character class)</td><td></td></tr>
+- * <tr><td></td><td>|</td><td><i>simpleexp</i></td><td></td><td></td></tr>
+- *
+- * <tr><td><i>charclasses</i></td><td>::=</td><td><i>charclass</i>&nbsp;<i>charclasses</i></td><td></td><td></td></tr>
+- * <tr><td></td><td>|</td><td><i>charclass</i></td><td></td><td></td></tr>
+- *
+- * <tr><td><i>charclass</i></td><td>::=</td><td><i>charexp</i>&nbsp;<tt><b>-</b></tt>&nbsp;<i>charexp</i></td><td>(character range, including end-points)</td><td></td></tr>
+- * <tr><td></td><td>|</td><td><i>charexp</i></td><td></td><td></td></tr>
+- *
+- * <tr><td><i>simpleexp</i></td><td>::=</td><td><i>charexp</i></td><td></td><td></td></tr>
+- * <tr><td></td><td>|</td><td><tt><b>.</b></tt></td><td>(any single character)</td><td></td></tr>
+- * <tr><td></td><td>|</td><td><tt><b>#</b></tt></td><td>(the empty language)</td><td><small>[OPTIONAL]</small></td></tr>
+- * <tr><td></td><td>|</td><td><tt><b>@</b></tt></td><td>(any string)</td><td><small>[OPTIONAL]</small></td></tr>
+- * <tr><td></td><td>|</td><td><tt><b>"</b></tt>&nbsp;&lt;Unicode string without double-quotes&gt;&nbsp;<tt><b>"</b></tt></td><td>(a string)</td><td></td></tr>
+- * <tr><td></td><td>|</td><td><tt><b>(</b></tt>&nbsp;<tt><b>)</b></tt></td><td>(the empty string)</td><td></td></tr>
+- * <tr><td></td><td>|</td><td><tt><b>(</b></tt>&nbsp;<i>unionexp</i>&nbsp;<tt><b>)</b></tt></td><td>(precedence override)</td><td></td></tr>
+- * <tr><td></td><td>|</td><td><tt><b>&lt;</b></tt>&nbsp;&lt;identifier&gt;&nbsp;<tt><b>&gt;</b></tt></td><td>(named automaton)</td><td><small>[OPTIONAL]</small></td></tr>
+- * <tr><td></td><td>|</td><td><tt><b>&lt;</b><i>n</i>-<i>m</i><b>&gt;</b></tt></td><td>(numerical interval)</td><td><small>[OPTIONAL]</small></td></tr>
+- *
+- * <tr><td><i>charexp</i></td><td>::=</td><td>&lt;Unicode character&gt;</td><td>(a single non-reserved character)</td><td></td></tr>
+- * <tr><td></td><td>|</td><td><tt><b>\</b></tt>&nbsp;&lt;Unicode character&gt;&nbsp;</td><td>(a single character)</td><td></td></tr>
+- * </table>
+- * <p>
+- * The productions marked <small>[OPTIONAL]</small> are only allowed
+- * if specified by the syntax flags passed to the <code>RegExp</code>
+- * constructor.  The reserved characters used in the (enabled) syntax
+- * must be escaped with backslash (<tt><b>\</b></tt>) or double-quotes
+- * (<tt><b>"..."</b></tt>). (In contrast to other regexp syntaxes,
+- * this is required also in character classes.)  Be aware that
+- * dash (<tt><b>-</b></tt>) has a special meaning in <i>charclass</i> expressions.
+- * An identifier is a string not containing right angle bracket
+- * (<tt><b>&gt;</b></tt>) or dash (<tt><b>-</b></tt>).  Numerical intervals are
+- * specified by non-negative decimal integers and include both end
+- * points, and if <tt><i>n</i></tt> and <tt><i>m</i></tt> have the
+- * same number of digits, then the conforming strings must have that
+- * length (i.e. prefixed by 0's).
+- * @author Anders M&oslash;ller &lt;<a href="mailto:amoeller@cs.au.dk">amoeller@cs.au.dk</a>&gt; 
+- * */
+-public class RegExp {
+-	
+-	enum Kind {
+-		REGEXP_UNION,
+-		REGEXP_CONCATENATION,
+-		REGEXP_INTERSECTION,
+-		REGEXP_OPTIONAL,
+-		REGEXP_REPEAT,
+-		REGEXP_REPEAT_MIN,
+-		REGEXP_REPEAT_MINMAX,
+-		REGEXP_COMPLEMENT,
+-		REGEXP_CHAR,
+-		REGEXP_CHAR_RANGE,
+-		REGEXP_ANYCHAR,
+-		REGEXP_EMPTY,
+-		REGEXP_STRING,
+-		REGEXP_ANYSTRING,
+-		REGEXP_AUTOMATON,
+-		REGEXP_INTERVAL
+-	}
+-	
+-	/** 
+-	 * Syntax flag, enables intersection (<tt>&amp;</tt>). 
+-	 */
+-	private static final int INTERSECTION = 0x0001;
+-	
+-	/** 
+-	 * Syntax flag, enables complement (<tt>~</tt>). 
+-	 */
+-	private static final int COMPLEMENT = 0x0002;
+-	
+-	/** 
+-	 * Syntax flag, enables empty language (<tt>#</tt>). 
+-	 */
+-	private static final int EMPTY = 0x0004;
+-	
+-	/** 
+-	 * Syntax flag, enables anystring (<tt>@</tt>). 
+-	 */
+-	private static final int ANYSTRING = 0x0008;
+-	
+-	/** 
+-	 * Syntax flag, enables named automata (<tt>&lt;</tt>identifier<tt>&gt;</tt>). 
+-	 */
+-	private static final int AUTOMATON = 0x0010;
+-	
+-	/** 
+-	 * Syntax flag, enables numerical intervals (<tt>&lt;<i>n</i>-<i>m</i>&gt;</tt>). 
+-	 */
+-	private static final int INTERVAL = 0x0020;
+-	
+-	/** 
+-	 * Syntax flag, enables all optional regexp syntax. 
+-	 */
+-	private static final int ALL = 0xffff;
+-	
+-	private static boolean allow_mutation = false;
+-	
+-	private Kind kind;
+-	private RegExp exp1, exp2;
+-	private String s;
+-	private char c;
+-	private int min, max, digits;
+-	private char from, to;
+-	
+-	private String b;
+-	private int flags;
+-	private int pos;
+-	
+-	RegExp() {}
+-	
+-	/** 
+-	 * Constructs new <code>RegExp</code> from a string. 
+-	 * Same as <code>RegExp(s, ALL)</code>.
+-	 * @param s regexp string
+-	 * @exception IllegalArgumentException if an error occured while parsing the regular expression
+-	 */
+-	public RegExp(String s) throws IllegalArgumentException {
+-		this(s, ALL);
+-	}
+-	
+-	/** 
+-	 * Constructs new <code>RegExp</code> from a string. 
+-	 * @param s regexp string
+-	 * @param syntax_flags boolean 'or' of optional syntax constructs to be enabled
+-	 * @exception IllegalArgumentException if an error occured while parsing the regular expression
+-	 */
+-	private RegExp(String s, int syntax_flags) throws IllegalArgumentException {
+-		b = s;
+-		flags = syntax_flags;
+-		RegExp e;
+-		if (s.length() == 0)
+-			e = makeString("");
+-		else {
+-			e = parseUnionExp();
+-			if (pos < b.length())
+-				throw new IllegalArgumentException("end-of-string expected at position " + pos);
+-		}
+-		kind = e.kind;
+-		exp1 = e.exp1;
+-		exp2 = e.exp2;
+-		this.s = e.s;
+-		c = e.c;
+-		min = e.min;
+-		max = e.max;
+-		digits = e.digits;
+-		from = e.from;
+-		to = e.to;
+-		b = null;
+-	}
+-	
+-	/** 
+-	 * Constructs new <code>Automaton</code> from this <code>RegExp</code>. 
+-	 * Same as <code>toAutomaton(null)</code> (empty automaton map).
+-	 */
+-	public Automaton toAutomaton() {
+-		return toAutomatonAllowMutate(null, null, true);
+-	}
+-		
+-	/** 
+-	 * Constructs new <code>Automaton</code> from this <code>RegExp</code>. 
+-	 * The constructed automaton is minimal and deterministic and has no 
+-	 * transitions to dead states. 
+-	 * @param automata a map from automaton identifiers to automata 
+-	 *   (of type <code>Automaton</code>).
+-	 * @exception IllegalArgumentException if this regular expression uses
+-	 *   a named identifier that does not occur in the automaton map
+-	 */
+-	Automaton toAutomaton(Map<String, Automaton> automata) throws IllegalArgumentException {
+-		return toAutomatonAllowMutate(automata, null, true);
+-	}
+-
+-	
+-	private Automaton toAutomatonAllowMutate(Map<String, Automaton> automata, 
+-			AutomatonProvider automaton_provider,
+-			boolean minimize) throws IllegalArgumentException {
+-		boolean b = false;
+-		if (allow_mutation)
+-			b = Automaton.setAllowMutate(true); // thread unsafe
+-		Automaton a = toAutomaton(automata, automaton_provider, minimize);
+-		if (allow_mutation)
+-			Automaton.setAllowMutate(b);
+-		return a;
+-	}
+-		
+-	private Automaton toAutomaton(Map<String, Automaton> automata, 
+-			AutomatonProvider automaton_provider,
+-			boolean minimize) throws IllegalArgumentException {
+-		List<Automaton> list;
+-		Automaton a = null;
+-		switch (kind) {
+-		case REGEXP_UNION:
+-			list = new ArrayList<Automaton>();
+-			findLeaves(exp1, Kind.REGEXP_UNION, list, automata, automaton_provider, minimize);
+-			findLeaves(exp2, Kind.REGEXP_UNION, list, automata, automaton_provider, minimize);
+-			a = BasicOperations.union(list);
+-			if (minimize)
+-				a.minimize();
+-			break;
+-		case REGEXP_CONCATENATION:
+-			list = new ArrayList<Automaton>();
+-			findLeaves(exp1, Kind.REGEXP_CONCATENATION, list, automata, automaton_provider, minimize);
+-			findLeaves(exp2, Kind.REGEXP_CONCATENATION, list, automata, automaton_provider, minimize);
+-			a = BasicOperations.concatenate(list);
+-			if (minimize)
+-				a.minimize();
+-			break;
+-		case REGEXP_INTERSECTION:
+-			a = exp1.toAutomaton(automata, automaton_provider, minimize).intersection(exp2.toAutomaton(automata, automaton_provider, minimize));
+-			if (minimize)
+-				a.minimize();
+-			break;
+-		case REGEXP_OPTIONAL:
+-			a = exp1.toAutomaton(automata, automaton_provider, minimize).optional();
+-			if (minimize)
+-				a.minimize();
+-			break;
+-		case REGEXP_REPEAT:
+-			a = exp1.toAutomaton(automata, automaton_provider, minimize).repeat();
+-			if (minimize)
+-				a.minimize();
+-			break;
+-		case REGEXP_REPEAT_MIN:
+-			a = exp1.toAutomaton(automata, automaton_provider, minimize).repeat(min);
+-			if (minimize)
+-				a.minimize();
+-			break;
+-		case REGEXP_REPEAT_MINMAX:
+-			a = exp1.toAutomaton(automata, automaton_provider, minimize).repeat(min, max);
+-			if (minimize)
+-				a.minimize();
+-			break;
+-		case REGEXP_COMPLEMENT:
+-			a = exp1.toAutomaton(automata, automaton_provider, minimize).complement();
+-			if (minimize)
+-				a.minimize();
+-			break;
+-		case REGEXP_CHAR:
+-			a = BasicAutomata.makeChar(c);
+-			break;
+-		case REGEXP_CHAR_RANGE:
+-			a = BasicAutomata.makeCharRange(from, to);
+-			break;
+-		case REGEXP_ANYCHAR:
+-			a = BasicAutomata.makeAnyChar();
+-			break;
+-		case REGEXP_EMPTY:
+-			a = BasicAutomata.makeEmpty();
+-			break;
+-		case REGEXP_STRING:
+-			a = BasicAutomata.makeString(s);
+-			break;
+-		case REGEXP_ANYSTRING:
+-			a = BasicAutomata.makeAnyString();
+-			break;
+-		case REGEXP_AUTOMATON:
+-			Automaton aa = null;
+-			if (automata != null)
+-				aa = automata.get(s);
+-			if (aa == null && automaton_provider != null)
+-				try {
+-					aa = automaton_provider.getAutomaton(s);
+-				} catch (IOException e) {
+-					throw new IllegalArgumentException(e);
+-				}
+-			if (aa == null)
+-				throw new IllegalArgumentException("'" + s + "' not found");
+-			a = aa.clone(); // always clone here (ignore allow_mutate)
+-			break;
+-		case REGEXP_INTERVAL:
+-			a = BasicAutomata.makeInterval(min, max, digits);
+-			break;
+-		}
+-		return a;
+-	}
+-
+-	private void findLeaves(RegExp exp, Kind kind, List<Automaton> list, Map<String, Automaton> automata, 
+-			AutomatonProvider automaton_provider,
+-			boolean minimize) {
+-		if (exp.kind == kind) {
+-			findLeaves(exp.exp1, kind, list, automata, automaton_provider, minimize);
+-			findLeaves(exp.exp2, kind, list, automata, automaton_provider, minimize);
+-		} else
+-			list.add(exp.toAutomaton(automata, automaton_provider, minimize));
+-	}
+-
+-	private static RegExp makeUnion(RegExp exp1, RegExp exp2) {
+-		RegExp r = new RegExp();
+-		r.kind = Kind.REGEXP_UNION;
+-		r.exp1 = exp1;
+-		r.exp2 = exp2;
+-		return r;
+-	}
+-
+-	private static RegExp makeConcatenation(RegExp exp1, RegExp exp2) {
+-		if ((exp1.kind == Kind.REGEXP_CHAR || exp1.kind == Kind.REGEXP_STRING) && 
+-			(exp2.kind == Kind.REGEXP_CHAR || exp2.kind == Kind.REGEXP_STRING))
+-			return makeString(exp1, exp2);
+-		RegExp r = new RegExp();
+-		r.kind = Kind.REGEXP_CONCATENATION;
+-		if (exp1.kind == Kind.REGEXP_CONCATENATION && 
+-			(exp1.exp2.kind == Kind.REGEXP_CHAR || exp1.exp2.kind == Kind.REGEXP_STRING) && 
+-			(exp2.kind == Kind.REGEXP_CHAR || exp2.kind == Kind.REGEXP_STRING)) {
+-			r.exp1 = exp1.exp1;
+-			r.exp2 = makeString(exp1.exp2, exp2);
+-		} else if ((exp1.kind == Kind.REGEXP_CHAR || exp1.kind == Kind.REGEXP_STRING) && 
+-				   exp2.kind == Kind.REGEXP_CONCATENATION && 
+-				   (exp2.exp1.kind == Kind.REGEXP_CHAR || exp2.exp1.kind == Kind.REGEXP_STRING)) {
+-			r.exp1 = makeString(exp1, exp2.exp1);
+-			r.exp2 = exp2.exp2;
+-		} else {
+-			r.exp1 = exp1;
+-			r.exp2 = exp2;
+-		}
+-		return r;
+-	}
+-
+-	private static RegExp makeString(RegExp exp1, RegExp exp2) {
+-		StringBuilder b = new StringBuilder();
+-		if (exp1.kind == Kind.REGEXP_STRING)
+-			b.append(exp1.s);
+-		else
+-			b.append(exp1.c);
+-		if (exp2.kind == Kind.REGEXP_STRING)
+-			b.append(exp2.s);
+-		else
+-			b.append(exp2.c);
+-		return makeString(b.toString());
+-	}
+-
+-	private static RegExp makeIntersection(RegExp exp1, RegExp exp2) {
+-		RegExp r = new RegExp();
+-		r.kind = Kind.REGEXP_INTERSECTION;
+-		r.exp1 = exp1;
+-		r.exp2 = exp2;
+-		return r;
+-	}
+-
+-	private static RegExp makeOptional(RegExp exp) {
+-		RegExp r = new RegExp();
+-		r.kind = Kind.REGEXP_OPTIONAL;
+-		r.exp1 = exp;
+-		return r;
+-	}
+-
+-	private static RegExp makeRepeat(RegExp exp) {
+-		RegExp r = new RegExp();
+-		r.kind = Kind.REGEXP_REPEAT;
+-		r.exp1 = exp;
+-		return r;
+-	}
+-
+-	private static RegExp makeRepeat(RegExp exp, int min) {
+-		RegExp r = new RegExp();
+-		r.kind = Kind.REGEXP_REPEAT_MIN;
+-		r.exp1 = exp;
+-		r.min = min;
+-		return r;
+-	}
+-
+-	private static RegExp makeRepeat(RegExp exp, int min, int max) {
+-		RegExp r = new RegExp();
+-		r.kind = Kind.REGEXP_REPEAT_MINMAX;
+-		r.exp1 = exp;
+-		r.min = min;
+-		r.max = max;
+-		return r;
+-	}
+-
+-	private static RegExp makeComplement(RegExp exp) {
+-		RegExp r = new RegExp();
+-		r.kind = Kind.REGEXP_COMPLEMENT;
+-		r.exp1 = exp;
+-		return r;
+-	}
+-
+-	private static RegExp makeChar(char c) {
+-		RegExp r = new RegExp();
+-		r.kind = Kind.REGEXP_CHAR;
+-		r.c = c;
+-		return r;
+-	}
+-
+-	private static RegExp makeCharRange(char from, char to) {
+-		RegExp r = new RegExp();
+-		r.kind = Kind.REGEXP_CHAR_RANGE;
+-		r.from = from;
+-		r.to = to;
+-		return r;
+-	}
+-
+-	private static RegExp makeAnyChar() {
+-		RegExp r = new RegExp();
+-		r.kind = Kind.REGEXP_ANYCHAR;
+-		return r;
+-	}
+-
+-	private static RegExp makeEmpty() {
+-		RegExp r = new RegExp();
+-		r.kind = Kind.REGEXP_EMPTY;
+-		return r;
+-	}
+-
+-	private static RegExp makeString(String s) {
+-		RegExp r = new RegExp();
+-		r.kind = Kind.REGEXP_STRING;
+-		r.s = s;
+-		return r;
+-	}
+-
+-	private static RegExp makeAnyString() {
+-		RegExp r = new RegExp();
+-		r.kind = Kind.REGEXP_ANYSTRING;
+-		return r;
+-	}
+-
+-	private static RegExp makeAutomaton(String s) {
+-		RegExp r = new RegExp();
+-		r.kind = Kind.REGEXP_AUTOMATON;
+-		r.s = s;
+-		return r;
+-	}
+-
+-	private static RegExp makeInterval(int min, int max, int digits) {
+-		RegExp r = new RegExp();
+-		r.kind = Kind.REGEXP_INTERVAL;
+-		r.min = min;
+-		r.max = max;
+-		r.digits = digits;
+-		return r;
+-	}
+-
+-	private boolean peek(String s) {
+-		return more() && s.indexOf(b.charAt(pos)) != -1;
+-	}
+-
+-	private boolean match(char c) {
+-		if (pos >= b.length())
+-			return false;
+-		if (b.charAt(pos) == c) {
+-			pos++;
+-			return true;
+-		}
+-		return false;
+-	}
+-
+-	private boolean more() {
+-		return pos < b.length();
+-	}
+-
+-	private char next() throws IllegalArgumentException {
+-		if (!more())
+-			throw new IllegalArgumentException("unexpected end-of-string");
+-		return b.charAt(pos++);
+-	}
+-
+-	private boolean check(int flag) {
+-		return (flags & flag) != 0;
+-	}
+-
+-	private final RegExp parseUnionExp() throws IllegalArgumentException {
+-		RegExp e = parseInterExp();
+-		if (match('|'))
+-			e = makeUnion(e, parseUnionExp());
+-		return e;
+-	}
+-
+-	private final RegExp parseInterExp() throws IllegalArgumentException {
+-		RegExp e = parseConcatExp();
+-		if (check(INTERSECTION) && match('&'))
+-			e = makeIntersection(e, parseInterExp());
+-		return e;
+-	}
+-
+-	private final RegExp parseConcatExp() throws IllegalArgumentException {
+-		RegExp e = parseRepeatExp();
+-		if (more() && !peek(")|") && (!check(INTERSECTION) || !peek("&")))
+-			e = makeConcatenation(e, parseConcatExp());
+-		return e;
+-	}
+-
+-	private final RegExp parseRepeatExp() throws IllegalArgumentException {
+-		RegExp e = parseComplExp();
+-		while (peek("?*+{")) {
+-			if (match('?'))
+-				e = makeOptional(e);
+-			else if (match('*'))
+-				e = makeRepeat(e);
+-			else if (match('+'))
+-				e = makeRepeat(e, 1);
+-			else if (match('{')) {
+-				int start = pos;
+-				while (peek("0123456789"))
+-					next();
+-				if (start == pos)
+-					throw new IllegalArgumentException("integer expected at position " + pos);
+-				int n = Integer.parseInt(b.substring(start, pos));
+-				int m = -1;
+-				if (match(',')) {
+-					start = pos;
+-					while (peek("0123456789"))
+-						next();
+-					if (start != pos)
+-						m = Integer.parseInt(b.substring(start, pos));
+-				} else
+-					m = n;
+-				if (!match('}'))
+-					throw new IllegalArgumentException("expected '}' at position " + pos);
+-				if (m == -1)
+-					e = makeRepeat(e, n);
+-				else
+-					e = makeRepeat(e, n, m);
+-			}
+-		}
+-		return e;
+-	}
+-
+-	private final RegExp parseComplExp() throws IllegalArgumentException {
+-		if (check(COMPLEMENT) && match('~'))
+-			return makeComplement(parseComplExp());
+-		else
+-			return parseCharClassExp();
+-	}
+-
+-	private final RegExp parseCharClassExp() throws IllegalArgumentException {
+-		if (match('[')) {
+-			boolean negate = false;
+-			if (match('^'))
+-				negate = true;
+-			RegExp e = parseCharClasses();
+-			if (negate)
+-				e = makeIntersection(makeAnyChar(), makeComplement(e));
+-			if (!match(']'))
+-				throw new IllegalArgumentException("expected ']' at position " + pos);
+-			return e;
+-		} else
+-			return parseSimpleExp();
+-	}
+-
+-	private final RegExp parseCharClasses() throws IllegalArgumentException {
+-		RegExp e = parseCharClass();
+-		while (more() && !peek("]"))
+-			e = makeUnion(e, parseCharClass());
+-		return e;
+-	}
+-
+-	private final RegExp parseCharClass() throws IllegalArgumentException {
+-		char c = parseCharExp();
+-		if (match('-'))
+-			if (peek("]"))
+-                return makeUnion(makeChar(c), makeChar('-'));
+-            else
+-                return makeCharRange(c, parseCharExp());
+-		else
+-			return makeChar(c);
+-	}
+-
+-	private final RegExp parseSimpleExp() throws IllegalArgumentException {
+-		if (match('.'))
+-			return makeAnyChar();
+-		else if (check(EMPTY) && match('#'))
+-			return makeEmpty();
+-		else if (check(ANYSTRING) && match('@'))
+-			return makeAnyString();
+-		else if (match('"')) {
+-			int start = pos;
+-			while (more() && !peek("\""))
+-				next();
+-			if (!match('"'))
+-				throw new IllegalArgumentException("expected '\"' at position " + pos);
+-			return makeString(b.substring(start, pos - 1));
+-		} else if (match('(')) {
+-			if (match(')'))
+-				return makeString("");
+-			RegExp e = parseUnionExp();
+-			if (!match(')'))
+-				throw new IllegalArgumentException("expected ')' at position " + pos);
+-			return e;
+-		} else if ((check(AUTOMATON) || check(INTERVAL)) && match('<')) {
+-			int start = pos;
+-			while (more() && !peek(">"))
+-				next();
+-			if (!match('>'))
+-				throw new IllegalArgumentException("expected '>' at position " + pos);
+-			String s = b.substring(start, pos - 1);
+-			int i = s.indexOf('-');
+-			if (i == -1) {
+-				if (!check(AUTOMATON))
+-					throw new IllegalArgumentException("interval syntax error at position " + (pos - 1));
+-				return makeAutomaton(s);
+-			} else {
+-				if (!check(INTERVAL))
+-					throw new IllegalArgumentException("illegal identifier at position " + (pos - 1));
+-				try {
+-					if (i == 0 || i == s.length() - 1 || i != s.lastIndexOf('-'))
+-						throw new NumberFormatException();
+-					String smin = s.substring(0, i);
+-					String smax = s.substring(i + 1, s.length());
+-					int imin = Integer.parseInt(smin);
+-					int imax = Integer.parseInt(smax);
+-					int digits;
+-					if (smin.length() == smax.length())
+-						digits = smin.length();
+-					else
+-						digits = 0;
+-					if (imin > imax) {
+-						int t = imin;
+-						imin = imax;
+-						imax = t;
+-					}
+-					return makeInterval(imin, imax, digits);
+-				} catch (NumberFormatException e) {
+-					throw new IllegalArgumentException("interval syntax error at position " + (pos - 1));
+-				}
+-			}
+-		} else
+-			return makeChar(parseCharExp());
+-	}
+-
+-	private final char parseCharExp() throws IllegalArgumentException {
+-		match('\\');
+-		return next();
+-	}
+-}
++/*
++ * Original license:
++ * 
++ * Copyright (c) 2001-2017 Anders Moeller
++ * All rights reserved.
++ * 
++ * Redistribution and use in source and binary forms, with or without
++ * modification, are permitted provided that the following conditions
++ * are met:
++ * 1. Redistributions of source code must retain the above copyright
++ *    notice, this list of conditions and the following disclaimer.
++ * 2. Redistributions in binary form must reproduce the above copyright
++ *    notice, this list of conditions and the following disclaimer in the
++ *    documentation and/or other materials provided with the distribution.
++ * 3. The name of the author may not be used to endorse or promote products
++ *    derived from this software without specific prior written permission.
++ * 
++ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
++ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
++ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
++ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
++ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
++ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
++ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
++ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
++ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
++ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++package st1920.automaton;
++
++import java.io.IOException;
++import java.util.ArrayList;
++import java.util.Collection;
++import java.util.List;
++import java.util.Map;
++
++/**
++ * Regular Expression extension to <code>Automaton</code>.
++ * <p>
++ * Regular expressions are built from the following abstract syntax:
++ * <table border=0>
++ * <tr><td><i>regexp</i></td><td>::=</td><td><i>unionexp</i></td><td></td><td></td></tr>
++ * <tr><td></td><td>|</td><td></td><td></td><td></td></tr>
++ *
++ * <tr><td><i>unionexp</i></td><td>::=</td><td><i>interexp</i>&nbsp;<tt><b>|</b></tt>&nbsp;<i>unionexp</i></td><td>(union)</td><td></td></tr>
++ * <tr><td></td><td>|</td><td><i>interexp</i></td><td></td><td></td></tr>
++ *
++ * <tr><td><i>interexp</i></td><td>::=</td><td><i>concatexp</i>&nbsp;<tt><b>&amp;</b></tt>&nbsp;<i>interexp</i></td><td>(intersection)</td><td><small>[OPTIONAL]</small></td></tr>
++ * <tr><td></td><td>|</td><td><i>concatexp</i></td><td></td><td></td></tr>
++ *
++ * <tr><td><i>concatexp</i></td><td>::=</td><td><i>repeatexp</i>&nbsp;<i>concatexp</i></td><td>(concatenation)</td><td></td></tr>
++ * <tr><td></td><td>|</td><td><i>repeatexp</i></td><td></td><td></td></tr>
++ *
++ * <tr><td><i>repeatexp</i></td><td>::=</td><td><i>repeatexp</i>&nbsp;<tt><b>?</b></tt></td><td>(zero or one occurrence)</td><td></td></tr>
++ * <tr><td></td><td>|</td><td><i>repeatexp</i>&nbsp;<tt><b>*</b></tt></td><td>(zero or more occurrences)</td><td></td></tr>
++ * <tr><td></td><td>|</td><td><i>repeatexp</i>&nbsp;<tt><b>+</b></tt></td><td>(one or more occurrences)</td><td></td></tr>
++ * <tr><td></td><td>|</td><td><i>repeatexp</i>&nbsp;<tt><b>{</b><i>n</i><b>}</b></tt></td><td>(<tt><i>n</i></tt> occurrences)</td><td></td></tr>
++ * <tr><td></td><td>|</td><td><i>repeatexp</i>&nbsp;<tt><b>{</b><i>n</i><b>,}</b></tt></td><td>(<tt><i>n</i></tt> or more occurrences)</td><td></td></tr>
++ * <tr><td></td><td>|</td><td><i>repeatexp</i>&nbsp;<tt><b>{</b><i>n</i><b>,</b><i>m</i><b>}</b></tt></td><td>(<tt><i>n</i></tt> to <tt><i>m</i></tt> occurrences, including both)</td><td></td></tr>
++ * <tr><td></td><td>|</td><td><i>complexp</i></td><td></td><td></td></tr>
++ *
++ * <tr><td><i>complexp</i></td><td>::=</td><td><tt><b>~</b></tt>&nbsp;<i>complexp</i></td><td>(complement)</td><td><small>[OPTIONAL]</small></td></tr>
++ * <tr><td></td><td>|</td><td><i>charclassexp</i></td><td></td><td></td></tr>
++ *
++ * <tr><td><i>charclassexp</i></td><td>::=</td><td><tt><b>[</b></tt>&nbsp;<i>charclasses</i>&nbsp;<tt><b>]</b></tt></td><td>(character class)</td><td></td></tr>
++ * <tr><td></td><td>|</td><td><tt><b>[^</b></tt>&nbsp;<i>charclasses</i>&nbsp;<tt><b>]</b></tt></td><td>(negated character class)</td><td></td></tr>
++ * <tr><td></td><td>|</td><td><i>simpleexp</i></td><td></td><td></td></tr>
++ *
++ * <tr><td><i>charclasses</i></td><td>::=</td><td><i>charclass</i>&nbsp;<i>charclasses</i></td><td></td><td></td></tr>
++ * <tr><td></td><td>|</td><td><i>charclass</i></td><td></td><td></td></tr>
++ *
++ * <tr><td><i>charclass</i></td><td>::=</td><td><i>charexp</i>&nbsp;<tt><b>-</b></tt>&nbsp;<i>charexp</i></td><td>(character range, including end-points)</td><td></td></tr>
++ * <tr><td></td><td>|</td><td><i>charexp</i></td><td></td><td></td></tr>
++ *
++ * <tr><td><i>simpleexp</i></td><td>::=</td><td><i>charexp</i></td><td></td><td></td></tr>
++ * <tr><td></td><td>|</td><td><tt><b>.</b></tt></td><td>(any single character)</td><td></td></tr>
++ * <tr><td></td><td>|</td><td><tt><b>#</b></tt></td><td>(the empty language)</td><td><small>[OPTIONAL]</small></td></tr>
++ * <tr><td></td><td>|</td><td><tt><b>@</b></tt></td><td>(any string)</td><td><small>[OPTIONAL]</small></td></tr>
++ * <tr><td></td><td>|</td><td><tt><b>"</b></tt>&nbsp;&lt;Unicode string without double-quotes&gt;&nbsp;<tt><b>"</b></tt></td><td>(a string)</td><td></td></tr>
++ * <tr><td></td><td>|</td><td><tt><b>(</b></tt>&nbsp;<tt><b>)</b></tt></td><td>(the empty string)</td><td></td></tr>
++ * <tr><td></td><td>|</td><td><tt><b>(</b></tt>&nbsp;<i>unionexp</i>&nbsp;<tt><b>)</b></tt></td><td>(precedence override)</td><td></td></tr>
++ * <tr><td></td><td>|</td><td><tt><b>&lt;</b></tt>&nbsp;&lt;identifier&gt;&nbsp;<tt><b>&gt;</b></tt></td><td>(named automaton)</td><td><small>[OPTIONAL]</small></td></tr>
++ * <tr><td></td><td>|</td><td><tt><b>&lt;</b><i>n</i>-<i>m</i><b>&gt;</b></tt></td><td>(numerical interval)</td><td><small>[OPTIONAL]</small></td></tr>
++ *
++ * <tr><td><i>charexp</i></td><td>::=</td><td>&lt;Unicode character&gt;</td><td>(a single non-reserved character)</td><td></td></tr>
++ * <tr><td></td><td>|</td><td><tt><b>\</b></tt>&nbsp;&lt;Unicode character&gt;&nbsp;</td><td>(a single character)</td><td></td></tr>
++ * </table>
++ * <p>
++ * The productions marked <small>[OPTIONAL]</small> are only allowed
++ * if specified by the syntax flags passed to the <code>RegExp</code>
++ * constructor.  The reserved characters used in the (enabled) syntax
++ * must be escaped with backslash (<tt><b>\</b></tt>) or double-quotes
++ * (<tt><b>"..."</b></tt>). (In contrast to other regexp syntaxes,
++ * this is required also in character classes.)  Be aware that
++ * dash (<tt><b>-</b></tt>) has a special meaning in <i>charclass</i> expressions.
++ * An identifier is a string not containing right angle bracket
++ * (<tt><b>&gt;</b></tt>) or dash (<tt><b>-</b></tt>).  Numerical intervals are
++ * specified by non-negative decimal integers and include both end
++ * points, and if <tt><i>n</i></tt> and <tt><i>m</i></tt> have the
++ * same number of digits, then the conforming strings must have that
++ * length (i.e. prefixed by 0's).
++ * @author Anders M&oslash;ller &lt;<a href="mailto:amoeller@cs.au.dk">amoeller@cs.au.dk</a>&gt; 
++ * */
++public class RegExp {
++	
++	enum Kind {
++		REGEXP_UNION,
++		REGEXP_CONCATENATION,
++		REGEXP_INTERSECTION,
++		REGEXP_OPTIONAL,
++		REGEXP_REPEAT,
++		REGEXP_REPEAT_MIN,
++		REGEXP_REPEAT_MINMAX,
++		REGEXP_COMPLEMENT,
++		REGEXP_CHAR,
++		REGEXP_CHAR_RANGE,
++		REGEXP_ANYCHAR,
++		REGEXP_EMPTY,
++		REGEXP_STRING,
++		REGEXP_ANYSTRING,
++		REGEXP_AUTOMATON,
++		REGEXP_INTERVAL,
++		REGEXP_NEW_LINE
++	}
++	
++	/** 
++	 * Syntax flag, enables intersection (<tt>&amp;</tt>). 
++	 */
++	private static final int INTERSECTION = 0x0001;
++	
++	/** 
++	 * Syntax flag, enables complement (<tt>~</tt>). 
++	 */
++	private static final int COMPLEMENT = 0x0002;
++	
++	/** 
++	 * Syntax flag, enables empty language (<tt>#</tt>). 
++	 */
++	private static final int EMPTY = 0x0004;
++	
++	/** 
++	 * Syntax flag, enables anystring (<tt>@</tt>). 
++	 */
++	private static final int ANYSTRING = 0x0008;
++	
++	/** 
++	 * Syntax flag, enables named automata (<tt>&lt;</tt>identifier<tt>&gt;</tt>). 
++	 */
++	private static final int AUTOMATON = 0x0010;
++	
++	/** 
++	 * Syntax flag, enables numerical intervals (<tt>&lt;<i>n</i>-<i>m</i>&gt;</tt>). 
++	 */
++	private static final int INTERVAL = 0x0020;
++	
++	/** 
++	 * Syntax flag, enables all optional regexp syntax. 
++	 */
++	private static final int ALL = 0xffff;
++	
++	private static boolean allow_mutation = false;
++	
++	private Kind kind;
++	private RegExp exp1, exp2;
++	private String s;
++	private char c;
++	private int min, max, digits;
++	private char from, to;
++	
++	private String b;
++	private int flags;
++	private int pos;
++	
++	RegExp() {}
++	
++	/** 
++	 * Constructs new <code>RegExp</code> from a string. 
++	 * Same as <code>RegExp(s, ALL)</code>.
++	 * @param s regexp string
++	 * @exception IllegalArgumentException if an error occured while parsing the regular expression
++	 */
++	public RegExp(String s) throws IllegalArgumentException {
++		this(s, ALL);
++	}
++	
++	/** 
++	 * Constructs new <code>RegExp</code> from a string. 
++	 * @param s regexp string
++	 * @param syntax_flags boolean 'or' of optional syntax constructs to be enabled
++	 * @exception IllegalArgumentException if an error occured while parsing the regular expression
++	 */
++	private RegExp(String s, int syntax_flags) throws IllegalArgumentException {
++		b = s;
++		flags = syntax_flags;
++		RegExp e;
++		if (s.length() == 0)
++			e = makeString("");
++		else {
++			e = parseUnionExp();
++			if (pos < b.length())
++				throw new IllegalArgumentException("end-of-string expected at position " + pos);
++		}
++		kind = e.kind;
++		exp1 = e.exp1;
++		exp2 = e.exp2;
++		this.s = e.s;
++		c = e.c;
++		min = e.min;
++		max = e.max;
++		digits = e.digits;
++		from = e.from;
++		to = e.to;
++		b = null;
++	}
++	
++	/** 
++	 * Constructs new <code>Automaton</code> from this <code>RegExp</code>. 
++	 * Same as <code>toAutomaton(null)</code> (empty automaton map).
++	 */
++	public Automaton toAutomaton() {
++		return toAutomatonAllowMutate(null, null, true);
++	}
++		
++	/** 
++	 * Constructs new <code>Automaton</code> from this <code>RegExp</code>. 
++	 * The constructed automaton is minimal and deterministic and has no 
++	 * transitions to dead states. 
++	 * @param automata a map from automaton identifiers to automata 
++	 *   (of type <code>Automaton</code>).
++	 * @exception IllegalArgumentException if this regular expression uses
++	 *   a named identifier that does not occur in the automaton map
++	 */
++	Automaton toAutomaton(Map<String, Automaton> automata) throws IllegalArgumentException {
++		return toAutomatonAllowMutate(automata, null, true);
++	}
++
++	
++	private Automaton toAutomatonAllowMutate(Map<String, Automaton> automata, 
++			AutomatonProvider automaton_provider,
++			boolean minimize) throws IllegalArgumentException {
++		boolean b = false;
++		if (allow_mutation)
++			b = Automaton.setAllowMutate(true); // thread unsafe
++		Automaton a = toAutomaton(automata, automaton_provider, minimize);
++		if (allow_mutation)
++			Automaton.setAllowMutate(b);
++		return a;
++	}
++		
++	private Automaton toAutomaton(Map<String, Automaton> automata, 
++			AutomatonProvider automaton_provider,
++			boolean minimize) throws IllegalArgumentException {
++		List<Automaton> list;
++		Automaton a = null;
++		switch (kind) {
++		case REGEXP_UNION:
++			list = new ArrayList<Automaton>();
++			findLeaves(exp1, Kind.REGEXP_UNION, list, automata, automaton_provider, minimize);
++			findLeaves(exp2, Kind.REGEXP_UNION, list, automata, automaton_provider, minimize);
++			a = BasicOperations.union(list);
++			if (minimize)
++				a.minimize();
++			break;
++		case REGEXP_CONCATENATION:
++			list = new ArrayList<Automaton>();
++			findLeaves(exp1, Kind.REGEXP_CONCATENATION, list, automata, automaton_provider, minimize);
++			findLeaves(exp2, Kind.REGEXP_CONCATENATION, list, automata, automaton_provider, minimize);
++			a = BasicOperations.concatenate(list);
++			if (minimize)
++				a.minimize();
++			break;
++		case REGEXP_INTERSECTION:
++			a = exp1.toAutomaton(automata, automaton_provider, minimize).intersection(exp2.toAutomaton(automata, automaton_provider, minimize));
++			if (minimize)
++				a.minimize();
++			break;
++		case REGEXP_OPTIONAL:
++			a = exp1.toAutomaton(automata, automaton_provider, minimize).optional();
++			if (minimize)
++				a.minimize();
++			break;
++		case REGEXP_REPEAT:
++			a = exp1.toAutomaton(automata, automaton_provider, minimize).repeat();
++			if (minimize)
++				a.minimize();
++			break;
++		case REGEXP_REPEAT_MIN:
++			a = exp1.toAutomaton(automata, automaton_provider, minimize).repeat(min);
++			if (minimize)
++				a.minimize();
++			break;
++		case REGEXP_REPEAT_MINMAX:
++			a = exp1.toAutomaton(automata, automaton_provider, minimize).repeat(min, max);
++			if (minimize)
++				a.minimize();
++			break;
++		case REGEXP_COMPLEMENT:
++			a = exp1.toAutomaton(automata, automaton_provider, minimize).complement();
++			if (minimize)
++				a.minimize();
++			break;
++		case REGEXP_CHAR:
++			a = BasicAutomata.makeChar(c);
++			break;
++		case REGEXP_CHAR_RANGE:
++			a = BasicAutomata.makeCharRange(from, to);
++			break;
++		case REGEXP_ANYCHAR:
++			a = BasicAutomata.makeAnyChar();
++			break;
++		case REGEXP_EMPTY:
++			a = BasicAutomata.makeEmpty();
++			break;
++		case REGEXP_STRING:
++			a = BasicAutomata.makeString(s);
++			break;
++		case REGEXP_ANYSTRING:
++			a = BasicAutomata.makeAnyString();
++			break;
++		case REGEXP_AUTOMATON:
++			Automaton aa = null;
++			if (automata != null)
++				aa = automata.get(s);
++			if (aa == null && automaton_provider != null)
++				try {
++					aa = automaton_provider.getAutomaton(s);
++				} catch (IOException e) {
++					throw new IllegalArgumentException(e);
++				}
++			if (aa == null)
++				throw new IllegalArgumentException("'" + s + "' not found");
++			a = aa.clone(); // always clone here (ignore allow_mutate)
++			break;
++		case REGEXP_INTERVAL:
++			a = BasicAutomata.makeInterval(min, max, digits);
++			break;
++		case REGEXP_NEW_LINE:
++			Automaton x = BasicAutomata.makeNewLineMac();
++			Automaton y = BasicAutomata.makeNewLineWindows();
++			Automaton z = BasicAutomata.makeNewLineUnix();
++			Collection<Automaton> l = new ArrayList<Automaton>();
++			l.add(x);
++			l.add(y);
++			l.add(z);
++			a = BasicOperations.union(l);
++			break;
++		}
++		return a;
++	}
++
++	private void findLeaves(RegExp exp, Kind kind, List<Automaton> list, Map<String, Automaton> automata, 
++			AutomatonProvider automaton_provider,
++			boolean minimize) {
++		if (exp.kind == kind) {
++			findLeaves(exp.exp1, kind, list, automata, automaton_provider, minimize);
++			findLeaves(exp.exp2, kind, list, automata, automaton_provider, minimize);
++		} else
++			list.add(exp.toAutomaton(automata, automaton_provider, minimize));
++	}
++
++	private static RegExp makeUnion(RegExp exp1, RegExp exp2) {
++		RegExp r = new RegExp();
++		r.kind = Kind.REGEXP_UNION;
++		r.exp1 = exp1;
++		r.exp2 = exp2;
++		return r;
++	}
++
++	private static RegExp makeConcatenation(RegExp exp1, RegExp exp2) {
++		if ((exp1.kind == Kind.REGEXP_CHAR || exp1.kind == Kind.REGEXP_STRING) && 
++			(exp2.kind == Kind.REGEXP_CHAR || exp2.kind == Kind.REGEXP_STRING))
++			return makeString(exp1, exp2);
++		RegExp r = new RegExp();
++		r.kind = Kind.REGEXP_CONCATENATION;
++		if (exp1.kind == Kind.REGEXP_CONCATENATION && 
++			(exp1.exp2.kind == Kind.REGEXP_CHAR || exp1.exp2.kind == Kind.REGEXP_STRING) && 
++			(exp2.kind == Kind.REGEXP_CHAR || exp2.kind == Kind.REGEXP_STRING)) {
++			r.exp1 = exp1.exp1;
++			r.exp2 = makeString(exp1.exp2, exp2);
++		} else if ((exp1.kind == Kind.REGEXP_CHAR || exp1.kind == Kind.REGEXP_STRING) && 
++				   exp2.kind == Kind.REGEXP_CONCATENATION && 
++				   (exp2.exp1.kind == Kind.REGEXP_CHAR || exp2.exp1.kind == Kind.REGEXP_STRING)) {
++			r.exp1 = makeString(exp1, exp2.exp1);
++			r.exp2 = exp2.exp2;
++		} else {
++			r.exp1 = exp1;
++			r.exp2 = exp2;
++		}
++		return r;
++	}
++
++	private static RegExp makeString(RegExp exp1, RegExp exp2) {
++		StringBuilder b = new StringBuilder();
++		if (exp1.kind == Kind.REGEXP_STRING)
++			b.append(exp1.s);
++		else
++			b.append(exp1.c);
++		if (exp2.kind == Kind.REGEXP_STRING)
++			b.append(exp2.s);
++		else
++			b.append(exp2.c);
++		return makeString(b.toString());
++	}
++
++	private static RegExp makeIntersection(RegExp exp1, RegExp exp2) {
++		RegExp r = new RegExp();
++		r.kind = Kind.REGEXP_INTERSECTION;
++		r.exp1 = exp1;
++		r.exp2 = exp2;
++		return r;
++	}
++
++	private static RegExp makeOptional(RegExp exp) {
++		RegExp r = new RegExp();
++		r.kind = Kind.REGEXP_OPTIONAL;
++		r.exp1 = exp;
++		return r;
++	}
++
++	private static RegExp makeRepeat(RegExp exp) {
++		RegExp r = new RegExp();
++		r.kind = Kind.REGEXP_REPEAT;
++		r.exp1 = exp;
++		return r;
++	}
++
++	private static RegExp makeRepeat(RegExp exp, int min) {
++		RegExp r = new RegExp();
++		r.kind = Kind.REGEXP_REPEAT_MIN;
++		r.exp1 = exp;
++		r.min = min;
++		return r;
++	}
++
++	private static RegExp makeRepeat(RegExp exp, int min, int max) {
++		RegExp r = new RegExp();
++		r.kind = Kind.REGEXP_REPEAT_MINMAX;
++		r.exp1 = exp;
++		r.min = min;
++		r.max = max;
++		return r;
++	}
++
++	private static RegExp makeComplement(RegExp exp) {
++		RegExp r = new RegExp();
++		r.kind = Kind.REGEXP_COMPLEMENT;
++		r.exp1 = exp;
++		return r;
++	}
++
++	private static RegExp makeChar(char c) {
++		RegExp r = new RegExp();
++		r.kind = Kind.REGEXP_CHAR;
++		r.c = c;
++		return r;
++	}
++
++	private static RegExp makeCharRange(char from, char to) {
++		RegExp r = new RegExp();
++		r.kind = Kind.REGEXP_CHAR_RANGE;
++		r.from = from;
++		r.to = to;
++		return r;
++	}
++
++	private static RegExp makeAnyChar() {
++		RegExp r = new RegExp();
++		r.kind = Kind.REGEXP_ANYCHAR;
++		return r;
++	}
++
++	private static RegExp makeEmpty() {
++		RegExp r = new RegExp();
++		r.kind = Kind.REGEXP_EMPTY;
++		return r;
++	}
++
++	private static RegExp makeString(String s) {
++		RegExp r = new RegExp();
++		r.kind = Kind.REGEXP_STRING;
++		r.s = s;
++		return r;
++	}
++
++	private static RegExp makeAnyString() {
++		RegExp r = new RegExp();
++		r.kind = Kind.REGEXP_ANYSTRING;
++		return r;
++	}
++	
++	private static RegExp makeNewLine() {
++		RegExp r = new RegExp();
++		r.kind = Kind.REGEXP_NEW_LINE;
++		return r;
++	}
++
++	private static RegExp makeAutomaton(String s) {
++		RegExp r = new RegExp();
++		r.kind = Kind.REGEXP_AUTOMATON;
++		r.s = s;
++		return r;
++	}
++
++	private static RegExp makeInterval(int min, int max, int digits) {
++		RegExp r = new RegExp();
++		r.kind = Kind.REGEXP_INTERVAL;
++		r.min = min;
++		r.max = max;
++		r.digits = digits;
++		return r;
++	}
++
++	private boolean peek(String s) {
++		return more() && s.indexOf(b.charAt(pos)) != -1;
++	}
++
++	private boolean match(char c) {
++		if (pos >= b.length())
++			return false;
++		if (b.charAt(pos) == c) {
++			pos++;
++			return true;
++		}
++		return false;
++	}
++
++	private boolean more() {
++		return pos < b.length();
++	}
++
++	private char next() throws IllegalArgumentException {
++		if (!more())
++			throw new IllegalArgumentException("unexpected end-of-string");
++		return b.charAt(pos++);
++	}
++
++	private boolean check(int flag) {
++		return (flags & flag) != 0;
++	}
++
++	private final RegExp parseUnionExp() throws IllegalArgumentException {
++		RegExp e = parseInterExp();
++		if (match('|'))
++			e = makeUnion(e, parseUnionExp());
++		return e;
++	}
++
++	private final RegExp parseInterExp() throws IllegalArgumentException {
++		RegExp e = parseConcatExp();
++		if (check(INTERSECTION) && match('&'))
++			e = makeIntersection(e, parseInterExp());
++		return e;
++	}
++
++	private final RegExp parseConcatExp() throws IllegalArgumentException {
++		RegExp e = parseRepeatExp();
++		if (more() && !peek(")|") && (!check(INTERSECTION) || !peek("&")))
++			e = makeConcatenation(e, parseConcatExp());
++		return e;
++	}
++
++	private final RegExp parseRepeatExp() throws IllegalArgumentException {
++		RegExp e = parseComplExp();
++		while (peek("?*+{")) {
++			if (match('?'))
++				e = makeOptional(e);
++			else if (match('*'))
++				e = makeRepeat(e);
++			else if (match('+'))
++				e = makeRepeat(e, 1);
++			else if (match('{')) {
++				int start = pos;
++				while (peek("0123456789"))
++					next();
++				if (start == pos)
++					throw new IllegalArgumentException("integer expected at position " + pos);
++				int n = Integer.parseInt(b.substring(start, pos));
++				int m = -1;
++				if (match(',')) {
++					start = pos;
++					while (peek("0123456789"))
++						next();
++					if (start != pos)
++						m = Integer.parseInt(b.substring(start, pos));
++				} else
++					m = n;
++				if (!match('}'))
++					throw new IllegalArgumentException("expected '}' at position " + pos);
++				if (m == -1)
++					e = makeRepeat(e, n);
++				else
++					e = makeRepeat(e, n, m);
++			}
++		}
++		return e;
++	}
++
++	private final RegExp parseComplExp() throws IllegalArgumentException {
++		if (check(COMPLEMENT) && match('~'))
++			return makeComplement(parseComplExp());
++		else
++			return parseCharClassExp();
++	}
++
++	private final RegExp parseCharClassExp() throws IllegalArgumentException {
++		if (match('[')) {
++			boolean negate = false;
++			if (match('^'))
++				negate = true;
++			RegExp e = parseCharClasses();
++			if (negate)
++				e = makeIntersection(makeAnyChar(), makeComplement(e));
++			if (!match(']'))
++				throw new IllegalArgumentException("expected ']' at position " + pos);
++			return e;
++		} else
++			return parseSimpleExp();
++	}
++
++	private final RegExp parseCharClasses() throws IllegalArgumentException {
++		RegExp e = parseCharClass();
++		while (more() && !peek("]"))
++			e = makeUnion(e, parseCharClass());
++		return e;
++	}
++
++	private final RegExp parseCharClass() throws IllegalArgumentException {
++		char c = parseCharExp();
++		if (match('-'))
++			if (peek("]"))
++                return makeUnion(makeChar(c), makeChar('-'));
++            else
++                return makeCharRange(c, parseCharExp());
++		else
++			return makeChar(c);
++	}
++
++	private final RegExp parseSimpleExp() throws IllegalArgumentException {
++		if (match('.'))
++			return makeAnyChar();
++		else if (check(EMPTY) && match('#'))
++			return makeEmpty();
++		else if (check(ANYSTRING) && match('@'))
++			return makeAnyString();
++		else if (match('$'))
++			return makeNewLine();
++		else if (match('"')) {
++			int start = pos;
++			while (more() && !peek("\""))
++				next();
++			if (!match('"'))
++				throw new IllegalArgumentException("expected '\"' at position " + pos);
++			return makeString(b.substring(start, pos - 1));
++		} else if (match('(')) {
++			if (match(')'))
++				return makeString("");
++			RegExp e = parseUnionExp();
++			if (!match(')'))
++				throw new IllegalArgumentException("expected ')' at position " + pos);
++			return e;
++		} else if ((check(AUTOMATON) || check(INTERVAL)) && match('<')) {
++			int start = pos;
++			while (more() && !peek(">"))
++				next();
++			if (!match('>'))
++				throw new IllegalArgumentException("expected '>' at position " + pos);
++			String s = b.substring(start, pos - 1);
++			int i = s.indexOf('-');
++			if (i == -1) {
++				if (!check(AUTOMATON))
++					throw new IllegalArgumentException("interval syntax error at position " + (pos - 1));
++				return makeAutomaton(s);
++			} else {
++				if (!check(INTERVAL))
++					throw new IllegalArgumentException("illegal identifier at position " + (pos - 1));
++				try {
++					if (i == 0 || i == s.length() - 1 || i != s.lastIndexOf('-'))
++						throw new NumberFormatException();
++					String smin = s.substring(0, i);
++					String smax = s.substring(i + 1, s.length());
++					int imin = Integer.parseInt(smin);
++					int imax = Integer.parseInt(smax);
++					int digits;
++					if (smin.length() == smax.length())
++						digits = smin.length();
++					else
++						digits = 0;
++					if (imin > imax) {
++						int t = imin;
++						imin = imax;
++						imax = t;
++					}
++					return makeInterval(imin, imax, digits);
++				} catch (NumberFormatException e) {
++					throw new IllegalArgumentException("interval syntax error at position " + (pos - 1));
++				}
++			}
++		} else
++			return makeChar(parseCharExp());
++	}
++
++	private final char parseCharExp() throws IllegalArgumentException {
++		match('\\');
++		return next();
++	}
++}
