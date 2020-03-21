@@ -245,22 +245,23 @@ final public class BasicAutomata {
 	 */
 	public static Automaton makeNewLineUnix() {
 		Automaton a = new Automaton();
-		 a.singleton = "\n";
-		 a.deterministic = true;
-		return a;
-		
+		a.singleton = "\n";
+		a.deterministic = true;
+		return a;	
 	}
+	
 	public static Automaton makeNewLineMac() {
  		Automaton a = new Automaton();
-		 a.singleton = "\r";
-		 a.deterministic = true;
+		a.singleton = "\r";
+		a.deterministic = true;
 		return a;
-		
-	}	public static Automaton makeNewLineWindows() {
+	}	
+	
+	public static Automaton makeNewLineWindows() {
  		Automaton a = new Automaton();
-		 a.singleton = "\r\n";
-		 a.deterministic = true;
+		a.singleton = "\r\n";
+		a.deterministic = true;
 		return a;
-		
 	}
+	
 }
