@@ -132,4 +132,29 @@ public class Task4 {
 	public void test28() {
 		assertTrue(RegExpMatcher.matches("$", "\\$"));
 	}
+	
+	@Test
+	public void test29() {
+		assertTrue(RegExpMatcher.matches("3\r\n", "<1-5>$"));
+	}
+	
+	@Test
+	public void test30() {
+		assertTrue(RegExpMatcher.matches("\r\n", "@"));
+	}
+	
+	@Test
+	public void test31() {
+		assertFalse(RegExpMatcher.matches("\r\n", "#"));
+	}
+	
+	@Test
+	public void test32() {
+		assertTrue(RegExpMatcher.matches("\r\n", "..@"));
+	}
+	
+	@Test
+	public void test33() {
+		assertFalse(RegExpMatcher.matches("\r\n", "..."));
+	}
 }
