@@ -90,7 +90,7 @@ public class Task4 {
 	//this should be true?
 	@Test
 	public void test17() {
-		assertTrue(RegExpMatcher.matches("\r\n", "."));
+		assertFalse(RegExpMatcher.matches("\r\n", "."));
 	}
 	
 	@Test
