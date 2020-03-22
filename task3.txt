@@ -10,4 +10,6 @@ Disadvantages:
 - does not cover semi valid inputs at boundary of valid space
 - randoop test cases are designed to pass, therefore there might be undetected bugs
 - possible high maintenance to randoop test cases due to large numbers of it
+- Harder to maintain the test cases due to it being unreadable and making it hard to understand the test.
+
 
