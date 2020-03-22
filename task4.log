@@ -1,0 +1,241 @@
+commit a99d0911a5fc7e9643d57a69678cf0e2b8a0277c
+Author: Eer Kai Jun <kaijuneer@gmail.com>
+Date:   Sun Mar 22 16:59:53 2020 +0000
+
+    minor assert fixes
+
+M	bin/st1920/automaton/Task3_2.class
+M	bin/st1920/automaton/Task3_all.class
+M	test/st1920/automaton/Task3_2.java
+M	test/st1920/automaton/Task3_all.java
+
+commit b1c20d69f3436bb51eae2d149feda83f7389c1c6
+Author: Eer Kai Jun <kaijuneer@gmail.com>
+Date:   Sun Mar 22 16:55:37 2020 +0000
+
+    test case \r\n and . should not match
+
+M	bin/st1920/automaton/Task4.class
+M	test/st1920/automaton/Task4.java
+
+commit dbcfaf96e077d2198d496b24d71214ff55ffba20
+Author: Kai Jun <kaijuneer@gmail.com>
+Date:   Sat Mar 21 17:26:42 2020 +0000
+
+    added patch file for task4
+
+A	task4.patch
+
+commit 8a7356d3731c9d8c88acfc611bd15fec3941d06a
+Author: Kai Jun <kaijuneer@gmail.com>
+Date:   Sat Mar 21 17:02:53 2020 +0000
+
+    added bullet points
+
+M	task3.txt
+
+commit 2aecf06994e139d0a171c750ded662c45fae2527
+Author: Kai Jun <kaijuneer@gmail.com>
+Date:   Sat Mar 21 16:43:02 2020 +0000
+
+    code cleanup
+
+M	src/st1920/automaton/BasicAutomata.java
+
+commit 09467d22ee8ac4f8cb4c08b19e0a338c33a55533
+Author: Kai Jun <kaijuneer@gmail.com>
+Date:   Sat Mar 21 16:39:36 2020 +0000
+
+    \r\n\r\n correctly considered as 2 occurences
+
+M	test/st1920/automaton/Task4.java
+
+commit dfb405362f3d160809656c13697cea9cad060ee5
+Author: Kai Jun <kaijuneer@gmail.com>
+Date:   Sat Mar 21 16:12:33 2020 +0000
+
+    \r\n works with # and @
+
+M	test/st1920/automaton/Task4.java
+
+commit 88b25dd1bb865d5bb63cf79ebf600de434773c4d
+Author: Kai Jun <kaijuneer@gmail.com>
+Date:   Sat Mar 21 15:45:55 2020 +0000
+
+    string $ should not match with regex $
+
+M	test/st1920/automaton/Task4.java
+
+commit 8429bc6438a123bb585ad81ad3652c8ffea4c154
+Author: Kuenzang <42326009+Kayzee805@users.noreply.github.com>
+Date:   Fri Mar 20 18:49:49 2020 +0000
+
+    tests with $ and \\$
+
+M	bin/st1920/automaton/Task4.class
+M	test/st1920/automaton/Task4.java
+
+commit 3bba3d8fcee659c1696753a9e97a22101679cfe9
+Author: Kuenzang <42326009+Kayzee805@users.noreply.github.com>
+Date:   Fri Mar 20 18:41:12 2020 +0000
+
+    test with other chars \t and tried reversing \r\n to \n\r
+
+M	bin/st1920/automaton/Task4.class
+M	test/st1920/automaton/Task4.java
+
+commit 60f3b9b38f05f0aa6ff3df2ac62096594722515b
+Author: Kuenzang <42326009+Kayzee805@users.noreply.github.com>
+Date:   Fri Mar 20 18:34:53 2020 +0000
+
+    new test with char $, new possible bug
+
+M	bin/st1920/automaton/Task4.class
+M	test/st1920/automaton/Task4.java
+
+commit b2e34f4e3cbaedab82e2af7dfdbb3151a5d30c2b
+Author: Kuenzang <42326009+Kayzee805@users.noreply.github.com>
+Date:   Fri Mar 20 18:23:30 2020 +0000
+
+    test with {} with \r\n as 2 and \r\n as 1
+
+M	bin/st1920/automaton/Task4.class
+M	test/st1920/automaton/Task4.java
+
+commit 84538c7f3f575547e45db4485b0a721ecbefa93d
+Author: Kuenzang <42326009+Kayzee805@users.noreply.github.com>
+Date:   Fri Mar 20 18:12:34 2020 +0000
+
+    tests with " . " and found a possible bug with \r\n
+
+M	test/st1920/automaton/Task4.java
+
+commit 80f78abb2702e6c89ddb3346ee442d7fcccadf87
+Author: Kuenzang <42326009+Kayzee805@users.noreply.github.com>
+Date:   Fri Mar 20 18:08:24 2020 +0000
+
+    tested +, ? and *
+
+M	test/st1920/automaton/Task4.java
+
+commit 5c31c0d64c5896d6ed800fcf983fa89421c980d5
+Author: Kuenzang <42326009+Kayzee805@users.noreply.github.com>
+Date:   Fri Mar 20 15:11:32 2020 +0000
+
+    works with space and not(~)
+
+M	test/st1920/automaton/Task4.java
+
+commit 49bd984043a1f894f859900f2e515d55dbd010b6
+Author: Kuenzang <42326009+Kayzee805@users.noreply.github.com>
+Date:   Fri Mar 20 15:08:44 2020 +0000
+
+    works for given example in coursework
+
+M	test/st1920/automaton/Task4.java
+
+commit 10204279bb168eb8d609105bbb2b64361d4f89dd
+Author: Kuenzang <42326009+Kayzee805@users.noreply.github.com>
+Date:   Fri Mar 20 15:00:03 2020 +0000
+
+    added more basic tests
+
+M	test/st1920/automaton/Task4.java
+
+commit 7910043797a45961c0efedaed7e28065fa3eccbd
+Author: Kuenzang <42326009+Kayzee805@users.noreply.github.com>
+Date:   Fri Mar 20 14:53:03 2020 +0000
+
+    works on all basic tests now, including empty string
+
+M	bin/st1920/automaton/BasicAutomata.class
+M	bin/st1920/automaton/RegExp$Kind.class
+M	bin/st1920/automaton/RegExp.class
+M	bin/st1920/automaton/Task3_2.class
+M	bin/st1920/automaton/Task3_all.class
+M	src/st1920/automaton/BasicAutomata.java
+M	src/st1920/automaton/RegExp.java
+M	test/st1920/automaton/Task4.java
+
+commit b7da168c4c63c95ac0b63c924abcf28d732cbe0f
+Author: Eer Kai Jun <kaijuneer@gmail.com>
+Date:   Wed Mar 18 15:43:32 2020 +0000
+
+    test should fail when empty string matches with $
+
+M	bin/st1920/automaton/Task4.class
+M	test/st1920/automaton/Task4.java
+
+commit 839e20e4c855a28d01edcc5b668d9136f6926303
+Author: Eer Kai Jun <kaijuneer@gmail.com>
+Date:   Wed Mar 18 15:21:00 2020 +0000
+
+    test case to check if all \n, \r, \r\n match $
+
+M	bin/st1920/automaton/Task4.class
+M	test/st1920/automaton/Task4.java
+
+commit 43f0c2c0bdca25a09cd37d41ec1cd97d86e179a1
+Author: Eer Kai Jun <kaijuneer@gmail.com>
+Date:   Wed Mar 18 15:17:30 2020 +0000
+
+    implementation to also match \r to $
+
+M	bin/st1920/automaton/BasicAutomata.class
+M	src/st1920/automaton/BasicAutomata.java
+
+commit 948fdbaad29f16f1521cad8505ac29ba8dfd1cc6
+Author: Kuenzang <42326009+Kayzee805@users.noreply.github.com>
+Date:   Sun Mar 15 14:12:40 2020 +0000
+
+    more coverage
+
+M	test/st1920/automaton/Task3_2.java
+M	test/st1920/automaton/Task3_all.java
+
+commit c848758811edd27f09980eb13c5778290914fcc9
+Author: Kuenzang <42326009+Kayzee805@users.noreply.github.com>
+Date:   Sun Mar 15 13:17:17 2020 +0000
+
+    increased coverage for 3.2
+
+M	.classpath
+A	.settings/org.eclipse.core.resources.prefs
+A	bin/.gitignore
+M	bin/Unicode.txt
+M	bin/st1920/automaton/Task1.class
+M	bin/st1920/automaton/Task3_2.class
+M	bin/st1920/automaton/Task3_all.class
+M	bin/st1920/automaton/package.html
+M	test/st1920/automaton/Task3_2.java
+M	test/st1920/automaton/Task3_all.java
+
+commit 618ca680aa4898201293132ab8ad01649b02d6d1
+Author: Eer Kai Jun <kaijuneer@gmail.com>
+Date:   Sat Mar 14 18:11:40 2020 +0000
+
+    add test case to check if \r and $ match
+
+M	bin/st1920/automaton/Task4.class
+M	test/st1920/automaton/Task4.java
+
+commit 0fbf5ac49e282a94390bf365d41111df611ca55f
+Author: Eer Kai Jun <kaijuneer@gmail.com>
+Date:   Sat Mar 14 18:09:03 2020 +0000
+
+    implementation to match only \n to $
+
+M	bin/st1920/automaton/BasicAutomata.class
+M	bin/st1920/automaton/RegExp$Kind.class
+M	bin/st1920/automaton/RegExp.class
+M	src/st1920/automaton/BasicAutomata.java
+M	src/st1920/automaton/RegExp.java
+
+commit 9f75f93fe1bb10ef7b86edfa560596b5102a7604
+Author: Eer Kai Jun <kaijuneer@gmail.com>
+Date:   Sat Mar 14 17:31:07 2020 +0000
+
+    \n to match $
+
+A	bin/st1920/automaton/Task4.class
+A	test/st1920/automaton/Task4.java
