@@ -74,6 +74,11 @@ public class Task3_2 {
     public void test0014() {
         assertTrue(RegExpMatcher.matches("hello", ".*&.*"));
     }
+    
+    @Test
+    public void test0015() {
+        assertFalse(RegExpMatcher.matches("03", "<0-0>"));
+    }
 
  
  
