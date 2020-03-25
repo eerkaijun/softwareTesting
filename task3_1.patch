@@ -1,6 +1,84 @@
+diff --git a/bin/st1920/automaton/MatchString.class b/bin/st1920/automaton/MatchString.class
+new file mode 100644
+index 0000000..34a326b
+Binary files /dev/null and b/bin/st1920/automaton/MatchString.class differ
+diff --git a/bin/st1920/automaton/REString.class b/bin/st1920/automaton/REString.class
+new file mode 100644
+index 0000000..ca0af93
+Binary files /dev/null and b/bin/st1920/automaton/REString.class differ
 diff --git a/bin/st1920/automaton/RegExpMatcher.class b/bin/st1920/automaton/RegExpMatcher.class
 index 4b8a076..d432464 100644
 Binary files a/bin/st1920/automaton/RegExpMatcher.class and b/bin/st1920/automaton/RegExpMatcher.class differ
+diff --git a/src/st1920/automaton/MatchString.java b/src/st1920/automaton/MatchString.java
+new file mode 100644
+index 0000000..96e543a
+--- /dev/null
++++ b/src/st1920/automaton/MatchString.java
+@@ -0,0 +1,42 @@
++package st1920.automaton;
++
++import java.util.Random;
++
++public class MatchString {
++	
++	final static String[] alphabet_list = {"a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"};
++	final static String[] number_list = {"1","2","3","4","5","6","7","8","9"};
++	final static String[] character_list = {"\"",".","[","]","{","}","(",")","-","_","+","*","?","%","^","~","#","@",",","<",">","\\","&","|"};
++	final static int seed = 250;
++	static Random rnd = new Random(seed);
++
++	public String match;
++	
++	public MatchString(String m) {
++		this.match = m;
++	}
++	
++	public String getMatchString() {
++		return this.match;
++	}
++	
++	public static String makeAlphabet() {
++		int select = rnd.nextInt(alphabet_list.length);
++		return alphabet_list[select];
++	}
++	
++	public static String makeNumber() {
++		int select = rnd.nextInt(number_list.length);
++		return number_list[select];
++	}
++	
++	public static String makeChar() {
++		int select = rnd.nextInt(character_list.length);
++		return character_list[select];
++	}
++	
++	public static String makeSpace() {
++		return " ";
++	}
++
++}
+\ No newline at end of file
+diff --git a/src/st1920/automaton/REString.java b/src/st1920/automaton/REString.java
+new file mode 100644
+index 0000000..331933f
+--- /dev/null
++++ b/src/st1920/automaton/REString.java
+@@ -0,0 +1,15 @@
++package st1920.automaton;
++
++public class REString {
++	
++	public String RE;
++	
++	public REString(String RE) {
++		this.RE = RE;
++	}
++	
++	public String getREString() {
++		return this.RE;
++	}
++
++}
 diff --git a/src/st1920/automaton/RegExpMatcher.java b/src/st1920/automaton/RegExpMatcher.java
 index 7cb0031..8fd8863 100644
 --- a/src/st1920/automaton/RegExpMatcher.java
